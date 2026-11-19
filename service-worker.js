@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rumah-kita-v1';
+const CACHE_NAME = 'rumah-kita-v5';
 const APP_FILES = [
   './',
   './index.html',
