@@ -5419,41 +5419,7 @@
       document.getElementById('zoomFitBtn').addEventListener('click', () => applyOrientationFitView());
       document.getElementById('zoomOutBtn').addEventListener('click', () => adjustZoom(0.84));
 
-
-      // Weekend group-play scheduler: two shared activities per weekend day.
-      const weekendGroupEventsDone = new Set();
-      function updateWeekendGroupPlay() {
-        const weekday = getWeekday();
-        if (!['Sabtu', 'Ahad'].includes(weekday)) return;
-        const { hourFloat } = getCurrentClock();
-        const dayKey = `${timeState.dayNumber}`;
-        const presentKids = characters.filter(c => c.active && c.visible && !c.isPet &&
-          !c.leavingHome && c.actionMode !== 'sleep' &&
-          (PROFILES[c.id]?.ageYears || 99) >= 3 && (PROFILES[c.id]?.ageYears || 99) < 13);
-        if (presentKids.length < 3) return;
-
-        if (hourFloat >= 10 && hourFloat < 11.5 && !weekendGroupEventsDone.has(`${dayKey}-morning`)) {
-          weekendGroupEventsDone.add(`${dayKey}-morning`);
-          startGroupKejarKejar();
-          characters.filter(c => c.active && c.visible && !c.isPet && !c.leavingHome &&
-            ['mama','papa','mummy_ngah','amaya'].includes(c.id) && c.actionMode !== 'sleep')
-            .forEach(adult => {
-              setCharacterActivity(adult, 'Menemani sepupu bermain kejar-kejar di halaman', 'play_kids', 37, 46, false, 'play', 7);
-            });
-          setTicker('🏃 Aktiviti hujung minggu: semua sepupu bermain kejar-kejar bersama!');
-        }
-        if (hourFloat >= 15 && hourFloat < 16.5 && !weekendGroupEventsDone.has(`${dayKey}-afternoon`)) {
-          weekendGroupEventsDone.add(`${dayKey}-afternoon`);
-          startGroupMasakMasak();
-          characters.filter(c => c.active && c.visible && !c.isPet && !c.leavingHome &&
-            ['mama','papa','mummy_ngah','amaya'].includes(c.id) && c.actionMode !== 'sleep')
-            .forEach(adult => {
-              setCharacterActivity(adult, 'Menyediakan permainan dan menemani kanak-kanak', 'play_kids', 35, 47, false, 'play', 7);
-            });
-          setTicker('🍳 Aktiviti hujung minggu: sepupu bermain masak-masak bersama!');
-        }
-      }
-\n      let lastFrameMs = performance.now();
+      let lastFrameMs = performance.now();
       let hudSyncAccum = 0;
       let isPausedByVisibility = false;
       let rafId = null;
