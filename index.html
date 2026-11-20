@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>RUMAH KITA — 2D Pixel Virtual Family Home</title>
+  <title>RUMAH KITA — Virtual Family Life v4 (rutin & anti-getar)</title>
   <meta name="theme-color" content="#0f172a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -619,15 +619,6 @@
         font-size: 11.5px;
       }
     }
-  
-    .decor-panel { position: fixed; z-index: 45; left: 50%; bottom: max(78px, env(safe-area-inset-bottom) + 70px); transform: translateX(-50%); width: min(340px, calc(100vw - 24px)); padding: 12px; border: 1px solid rgba(255,255,255,.2); border-radius: 14px; background: rgba(15,23,42,.94); color: #f8fafc; box-shadow: 0 12px 32px rgba(0,0,0,.35); font: 12px system-ui; }
-    .decor-panel[hidden] { display:none; }
-    .decor-panel-title { font-weight:700; margin-bottom:8px; }
-    .decor-options { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
-    .decor-options button,.decor-exit { border:1px solid rgba(255,255,255,.18); border-radius:8px; background:#334155; color:#fff; padding:9px 5px; font-size:12px; }
-    .decor-options button.active { background:#0f766e; border-color:#5eead4; }
-    .decor-exit { width:100%; margin-top:8px; background:#7c2d12; }
-    @media(max-width:600px) { .decor-panel { bottom: max(86px, env(safe-area-inset-bottom) + 72px); } }
 
   </style>
 </head>
@@ -642,11 +633,9 @@
         <span class="day-pill" id="dayDisplay">Hari 1 · Isnin</span>
         <span class="clock-pill" id="clockDisplay">07:00 AM</span>
         <span class="period-badge" id="periodBadge">Pagi</span>
-        <span class="night-accel-badge" id="nightAccelBadge">🌙 Malam dipercepat</span>
         <span class="papa-pill" id="papaStatusPill">Papa: Di Rumah</span>
       </div>
       <div class="hud-group">
-        <button class="btn-hud" id="decorModeBtn" title="Hias rumah">🪑 Hias</button>
         <button class="btn-hud" id="ambientSoundBtn" title="Bunyi suasana">🔇 Bunyi</button>
         <button class="btn-hud" id="quickGroupBtn" title="Kumpul Aktiviti Keluarga">👨‍👩‍👦‍👦 Kumpul</button>
         <button class="btn-hud primary" id="openDrawerBtn">☰ Menu</button>
@@ -664,15 +653,6 @@
       <button class="zoom-btn" id="zoomInBtn" title="Zum Masuk">+</button>
       <button class="zoom-btn" id="zoomFitBtn" title="Muat Semua">Fit</button>
       <button class="zoom-btn" id="zoomOutBtn" title="Zum Keluar">−</button>
-    </div>
-
-    <div id="decorPanel" class="decor-panel" hidden>
-      <div class="decor-panel-title">🪄 Pilih dekorasi, kemudian ketik lantai</div>
-      <div class="decor-options">
-        <button data-decor="plant">🪴 Tanaman</button><button data-decor="rug">🧶 Karpet</button><button data-decor="lamp">💡 Lampu</button>
-        <button data-decor="sofa">🛋️ Sofa</button><button data-decor="table">🪵 Meja</button><button data-decor="toy">🧸 Mainan</button>
-      </div>
-      <div style="display:flex;gap:6px;margin-top:8px"><button id="decorUndoBtn" class="decor-exit" style="margin:0;background:#475569">↶ Undo</button><button id="decorExitBtn" class="decor-exit" style="margin:0">Selesai</button></div>
     </div>
 
     <!-- Drawer Backdrop -->
@@ -703,21 +683,8 @@
       'use strict';
 
       /* =========================================================================
-         1. FASA D0, E, G & F CONSTANTS, FAMILY TREE & PROFILES
+         1. PEMALAR SALASILAH KELUARGA, JADUAL MALAM & PROFIL WATAK
          ========================================================================= */
-      // Pemalar FAMILY (FASA D0.3):
-      // - Papa (34, bekerja swasta di pejabat Isnin-Jumaat 9AM-6PM, memandu kereta)
-      //   dan Mama (31, suri rumah sepenuh masa) = ibu bapa Isaac (5) dan Hayyan (4).
-      //   Kedua-dua anak sentiasa di rumah.
-      // - Atok (nenek 55) dan Atok Bas (datuk 57) = ibu bapa Papa, bersara,
-      //   datuk nenek kepada SEMUA sepupu.
-      // - TokPa (datuk 65) dan Tokma (nenek 63) = ibu bapa Mama, bersara,
-      //   datuk nenek Isaac dan Hayyan sahaja.
-      // - Keluarga Ngah: Mummy Ngah (31, suri rumah), Pak Ngah (32, pemandu Grab,
-      //   kebanyakan masa di jalan raya), anak: Zaef (7), Ayden (5), Aufa (3).
-      // - Keluarga Amaya: Amaya (30, suri rumah), Uncle Syafiq (31, bekerja di pejabat
-      //   seperti Papa), anak: Alina (5), Afiya (2).
-      // - Semua sepupu sebelah Papa.
       const FAMILY = {
         teras: {
           bapa: 'papa',
@@ -753,15 +720,16 @@
         afiya: ['amaya', 'atok', 'atok_bas', 'mama']
       };
 
-      // FASA F.1 Night Routine Constants
+      // Pemalar rutin malam & waktu rehat
       const BEDTIME_KIDS = 21.0;        // 21:00 (21.5 pada malam Jumaat & Sabtu)
       const GUEST_LEAVE_START = 20.5;   // 20:30
       const GUEST_LEAVE_END = 21.75;    // 21:45
-      const NIGHT_SPEED_MULT = 2;       // 2x kelajuan malam
+      const NIGHT_SPEED_MULT = 1.0;  // Kelajuan masa konsisten siang dan malam
       const NIGHT_START = 22.0;         // 22:00 (10 PM)
       const NIGHT_END = 6.0;            // 06:00 (6 AM)
+      const VIRTUAL_MIN_PER_REAL_MIN = 300; // 1 saat sebenar = 5 minit virtual, siang dan malam
 
-      // FASA G.1 & G.4 Weekdays & Editable VISIT_PLAN
+      // Hari dalam minggu & pelan lawatan pelawat
       const WEEKDAYS = ['Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu', 'Ahad'];
       let START_WEEKDAY = 1; // 1 = Isnin .. 7 = Ahad
 
@@ -785,17 +753,17 @@
           mother: 'mummy_ngah',
           kids: ['zaef', 'ayden', 'aufa'],
           label: 'Mummy Ngah bawa Zaef, Ayden dan Aufa',
-          wednesdayProb: 0.40,
+          wednesdayProb: 0.80,
           saturdayProb: 1.00,
-          sundayProb: 0.50
+          sundayProb: 0.85
         },
         amayaGroup: {
           mother: 'amaya',
           kids: ['alina', 'afiya'],
           label: 'Amaya dan anak-anak',
-          fridayProb: 0.40,
+          fridayProb: 0.75,
           saturdayProb: 1.00,
-          sundayProb: 0.50
+          sundayProb: 0.85
         },
         pakNgah: {
           id: 'pak_ngah',
@@ -815,7 +783,7 @@
         }
       };
 
-      // Kadar perubahan keperluan per JAM VIRTUAL (FASA D.1)
+      // Kadar perubahan keperluan per JAM VIRTUAL
       const NEED_RATES = {
         lapar: 12,
         tenaga: -6,
@@ -825,7 +793,7 @@
         kebersihan: -4
       };
 
-      // Profil lengkap setiap watak (FASA D0.4)
+      // Profil lengkap setiap watak
       const PROFILES = {
         papa: {
           ageYears: 34,
@@ -833,7 +801,7 @@
           traits: { ceria: 0.72, penyabar: 0.88, aktif: 0.75, penyayang: 0.94, rajin: 0.92, pemalu: 0.25 },
           likes: ['work', 'play_kids', 'chat', 'eat', 'wash_car', 'bbq', 'tv'],
           dislikes: ['laundry'],
-          wakeHour: 6.25, // 6:15 hari bekerja; 7:00 hujung minggu
+          wakeHour: 6.25,
           bedHour: 22.5,
           arriveHour: 0,
           speechStyle: 'ayah',
@@ -845,7 +813,7 @@
           traits: { ceria: 0.82, penyabar: 0.91, aktif: 0.84, penyayang: 0.98, rajin: 0.97, pemalu: 0.22 },
           likes: ['cook', 'tidy', 'laundry', 'care_kids', 'bbq'],
           dislikes: ['idle_long'],
-          wakeHour: 5.75, // 5:45
+          wakeHour: 5.75,
           bedHour: 22.5,
           arriveHour: 0,
           speechStyle: 'ibu',
@@ -857,7 +825,7 @@
           traits: { ceria: 0.90, penyabar: 0.52, aktif: 0.95, penyayang: 0.82, rajin: 0.60, pemalu: 0.18 },
           likes: ['slide', 'swim', 'playroom', 'seesaw', 'tag', 'masak_masak'],
           dislikes: ['nap', 'wait'],
-          wakeHour: 6.75, // 6:45
+          wakeHour: 6.75,
           bedHour: 21.0,
           arriveHour: 0,
           speechStyle: 'kanak',
@@ -869,7 +837,7 @@
           traits: { ceria: 0.86, penyabar: 0.45, aktif: 0.80, penyayang: 0.92, rajin: 0.50, pemalu: 0.42 },
           likes: ['pets', 'playroom', 'slide', 'eat', 'tag', 'masak_masak'],
           dislikes: ['deep_pool', 'hungry'],
-          wakeHour: 6.75, // 6:45
+          wakeHour: 6.75,
           bedHour: 21.0,
           arriveHour: 0,
           speechStyle: 'kanak',
@@ -1070,9 +1038,9 @@
       };
 
       /* =========================================================================
-         2. WORLD GRID, ROOMS, WALLS, DOORS, GATE, POOL, BBQ & ANIMAL HOMES
+         2. PETA DUNIA, BILIK, DINDING, PINTU, PAGAR, KOLAM, BBQ & RUMAH HAIWAN
          ========================================================================= */
-      const TIME_SCALE = 60;
+      const TIME_SCALE = VIRTUAL_MIN_PER_REAL_MIN;
       const TILE = 16;
       const COLS = 86;
       const ROWS = 60;
@@ -1124,38 +1092,37 @@
         { id: 'kitchen',  name: 'Dapur & Ruang Makan', c1: 35, r1: 11, c2: 56, r2: 26, floor: CELL_FLOOR_TILE },
         { id: 'playroom', name: 'Bilik Mainan',        c1: 56, r1: 11, c2: 72, r2: 26, floor: CELL_FLOOR_WOOD },
         { id: 'office',   name: 'Pejabat WFH',         c1: 14, r1: 26, c2: 31, r2: 39, floor: CELL_FLOOR_WOOD },
-        { id: 'bathroom', name: 'Bilik Mandi',         c1: 31, r1: 26, c2: 41, r2: 39, floor: CELL_FLOOR_TILE },
+        { id: 'kidsBedroom', name: 'Bilik Tidur Anak-anak', c1: 31, r1: 26, c2: 41, r2: 39, floor: CELL_FLOOR_WOOD },
         { id: 'bedroom',  name: 'Bilik Tidur',         c1: 41, r1: 26, c2: 59, r2: 39, floor: CELL_FLOOR_WOOD },
         { id: 'toilet',   name: 'Tandas',              c1: 59, r1: 26, c2: 65, r2: 39, floor: CELL_FLOOR_TILE },
-        { id: 'laundry',  name: 'Bilik Dobi',          c1: 65, r1: 26, c2: 72, r2: 39, floor: CELL_FLOOR_TILE }
+        { id: 'bathroom', name: 'Bilik Mandi',          c1: 65, r1: 26, c2: 72, r2: 39, floor: CELL_FLOOR_TILE }
       ];
 
-      // FASA F.7 ANIMAL_HOMES (rumah haiwan di halaman kiri/bawah dengan pintu masuk & homeSpot)
       const ANIMAL_HOMES = {
         kucing: {
           id: 'kucing',
           label: 'Rumah Tamtam',
-          c1: 7, r1: 28, c2: 11, r2: 32,
+          c1: 8, r1: 29, c2: 10, r2: 31,
           doorC: 11, doorR: 30,
-          homeSpot: { x: 9 * TILE, y: 30 * TILE },
+          homeSpot: { x: 9.5 * TILE, y: 30.5 * TILE },
           color: '#334155',
           roofColor: '#0284c7'
         },
         ayam: {
           id: 'ayam',
           label: 'Reban Ciken',
-          c1: 7, r1: 36, c2: 11, r2: 40,
+          c1: 8, r1: 37, c2: 10, r2: 39,
           doorC: 11, doorR: 38,
-          homeSpot: { x: 9 * TILE, y: 38 * TILE },
+          homeSpot: { x: 9.5 * TILE, y: 38.5 * TILE },
           color: '#78350f',
           roofColor: '#dc2626'
         },
         itik: {
           id: 'itik',
           label: 'Pondok Kwek Kwek',
-          c1: 7, r1: 44, c2: 11, r2: 48,
+          c1: 8, r1: 45, c2: 10, r2: 47,
           doorC: 11, doorR: 46,
-          homeSpot: { x: 9 * TILE, y: 46 * TILE },
+          homeSpot: { x: 9.5 * TILE, y: 46.5 * TILE },
           color: '#0f766e',
           roofColor: '#eab308'
         }
@@ -1168,7 +1135,7 @@
 
       const SINGLE_LOCKS = {
         toilet:   { occupant: null, queue: [], waitSpots: [{ c: 61, r: 24 }, { c: 63, r: 24 }, { c: 59, r: 24 }] },
-        bathroom: { occupant: null, queue: [], waitSpots: [{ c: 36, r: 24 }, { c: 38, r: 24 }, { c: 34, r: 24 }] }
+        bathroom: { occupant: null, queue: [], waitSpots: [{ c: 66, r: 24 }, { c: 68, r: 24 }, { c: 70, r: 24 }] }
       };
 
       const PLAYGROUND = {
@@ -1177,6 +1144,25 @@
         swing:  { x: 53 * TILE, y: 44 * TILE, phase: 0, currentUser: null, queue: [] },
         bbq:    { x: 48 * TILE, y: 53 * TILE, active: false, smoke: [] }
       };
+
+      const SOLID_OBSTACLES = [
+        { x: 19.5 * TILE - 14, y: 45.5 * TILE - 23, w: 28, h: 46, label: 'Kereta Keluarga', activeFn: () => familyCar.state !== 'away' },
+        { x: 42 * TILE, y: 18 * TILE, w: 8 * TILE, h: 2.5 * TILE, label: 'Meja Makan', activeFn: () => true },
+        { x: 27 * TILE, y: 21 * TILE, w: 2 * TILE, h: 2 * TILE, label: 'Meja Ruang Tamu', activeFn: () => true },
+        { x: 41 * TILE, y: 50 * TILE, w: 4 * TILE, h: 2 * TILE, label: 'Meja Halaman', activeFn: () => true },
+        { x: 33 * TILE - 10, y: 44 * TILE - 16, w: 36, h: 28, label: 'Gelongsor', activeFn: () => true }
+      ];
+
+      function isPointBlockedBySolidObject(wx, wy, entityId = null) {
+        if (entityId === 'papa' && familyCar.state !== 'away') return false;
+        for (const obs of SOLID_OBSTACLES) {
+          if (obs.activeFn && !obs.activeFn()) continue;
+          if (wx >= obs.x - 4 && wx <= obs.x + obs.w + 4 && wy >= obs.y - 4 && wy <= obs.y + obs.h + 4) {
+            return true;
+          }
+        }
+        return false;
+      }
 
       function initializeEstateGrid() {
         setRect(0, 0, COLS - 1, ROWS - 1, CELL_GRASS, 'Halaman Rumah');
@@ -1202,12 +1188,11 @@
         carveDoor(35, 17, 35, 19, CELL_FLOOR_WOOD);
         carveDoor(56, 17, 56, 19, CELL_FLOOR_WOOD);
         carveDoor(35, 26, 37, 26, CELL_FLOOR_TILE);
-        carveDoor(31, 32, 31, 34, CELL_FLOOR_TILE);
+        // Pintu antara pejabat dan bilik tidur kanak-kanak ditutup; akses hanya melalui dapur.
         carveDoor(48, 26, 50, 26, CELL_FLOOR_WOOD);
         carveDoor(61, 26, 63, 26, CELL_FLOOR_TILE);
         carveDoor(68, 26, 70, 26, CELL_FLOOR_TILE);
 
-        // Animal homes footprints (walkable for owner pet, wall box around)
         Object.values(ANIMAL_HOMES).forEach(h => {
           setRect(h.c1, h.r1, h.c2, h.r2, CELL_GRASS, h.label);
           addWallBox(h.c1, h.r1, h.c2, h.r2);
@@ -1234,13 +1219,12 @@
       initializeEstateGrid();
 
       /* =========================================================================
-         3. A* PATHFINDING ENGINE
+         3. ENJIN LALUAN A*
          ========================================================================= */
       function isTileWalkable(c, r, allowPool = false, entityId = null) {
         if (!inBounds(c, r)) return false;
         const cell = grid[idx(c, r)];
         if (cell === CELL_WALL) {
-          // Benarkan haiwan pemilik masuk ke rumah sendiri bila tidur
           const ownerHome = entityId && ANIMAL_HOMES[entityId];
           if (ownerHome && c >= ownerHome.c1 && c <= ownerHome.c2 && r >= ownerHome.r1 && r <= ownerHome.r2) {
             return true;
@@ -1248,6 +1232,17 @@
           return false;
         }
         if (cell === CELL_POOL && !allowPool) return false;
+
+        // Hanya Tamtam (kucing) dibenarkan masuk ke dalam kawasan rumah/bilik
+        if (entityId === 'ayam' || entityId === 'itik') {
+          const rmName = roomMap[idx(c, r)];
+          const isInsideHouse = ROOMS.some(rm => rm.name === rmName);
+          if (isInsideHouse) return false;
+        }
+
+        const centerX = (c + 0.5) * TILE;
+        const centerY = (r + 0.5) * TILE;
+        if (isPointBlockedBySolidObject(centerX, centerY, entityId)) return false;
 
         if (entityId) {
           if (c >= 60 && c <= 64 && r >= 27 && r <= 38) {
@@ -1345,7 +1340,7 @@
       }
 
       /* =========================================================================
-         4. TIME SYSTEM, WEEKDAYS (FASA G) & ACCELERATED NIGHT (FASA F)
+         4. SISTEM MASA, HARI MINGGU & PERCEPATAN MALAM
          ========================================================================= */
       const timeState = {
         timeScale: TIME_SCALE,
@@ -1393,23 +1388,8 @@
         return { label: 'Malam', nightLight: true };
       }
 
-      // Peralihan lancar 30 minit virtual pada 22:00 (NIGHT_START) dan 06:00 (NIGHT_END)
       function getNightMultiplier() {
-        const { hourFloat: h } = getCurrentClock();
-        // 21.5 -> 22.0 : naik dari 1 ke NIGHT_SPEED_MULT
-        if (h >= NIGHT_START - 0.5 && h < NIGHT_START) {
-          const t = (h - (NIGHT_START - 0.5)) / 0.5;
-          return 1 + (NIGHT_SPEED_MULT - 1) * Math.max(0, Math.min(1, t));
-        }
-        // 22.0 -> 24.0 atau 0.0 -> 5.5 : NIGHT_SPEED_MULT
-        if (h >= NIGHT_START || h < NIGHT_END - 0.5) {
-          return NIGHT_SPEED_MULT;
-        }
-        // 5.5 -> 6.0 : turun dari NIGHT_SPEED_MULT ke 1
-        if (h >= NIGHT_END - 0.5 && h < NIGHT_END) {
-          const t = (NIGHT_END - h) / 0.5;
-          return 1 + (NIGHT_SPEED_MULT - 1) * Math.max(0, Math.min(1, t));
-        }
+        // Masa virtual kini konsisten: 5 minit virtual setiap saat sebenar, termasuk malam.
         return 1;
       }
 
@@ -1438,7 +1418,6 @@
         return `rgba(15, 23, 42, ${(0.44 * Math.max(0, Math.min(1, t))).toFixed(3)})`;
       }
 
-      // Papa bekerja 9AM-6PM HANYA pada hari bekerja (FASA G.3)
       function isPapaWorkTime() {
         if (timeState.papaMode === 'work') return true;
         if (timeState.papaMode === 'home') return false;
@@ -1471,7 +1450,7 @@
       }
 
       /* =========================================================================
-         5. VISIT PLAN (FASA G.4), GROUP DEPARTURES (FASA F.3) & CAR/GATE
+         5. PELAN LAWATAN, KEPULANGAN BERKUMPULAN & KENDERAAN/PAGAR
          ========================================================================= */
       const familyCar = {
         x: 19.5 * TILE,
@@ -1504,7 +1483,6 @@
         const isWed = wd === 'Rabu';
         const isFri = wd === 'Jumaat';
 
-        // Reset wantsToVisit untuk semua pelawat
         characters.forEach(c => {
           if (c.group === 'relative') {
             c.wantsToVisit = false;
@@ -1512,8 +1490,12 @@
             c.departedTonight = false;
           }
         });
+        // Isaac & Hayyan are core household children: ensure they are present every day.
+        ['isaac', 'hayyan'].forEach(id => {
+          const child = characters.find(c => c.id === id);
+          if (child) { child.active = true; child.visible = true; child.leavingHome = false; child.wantsToVisit = true; child.departedTonight = false; }
+        });
 
-        // 1. Kumpulan Atok: Atok & Atok Bas (80% workday, 100% Sabtu, 80% Ahad)
         const atokProb = isSat ? VISIT_PLAN.atokGroup.saturdayProb : isSun ? VISIT_PLAN.atokGroup.sundayProb : work ? VISIT_PLAN.atokGroup.workdayProb : 0;
         if (Math.random() < atokProb) {
           VISIT_PLAN.atokGroup.members.forEach(id => {
@@ -1522,7 +1504,6 @@
           });
         }
 
-        // 2. Kumpulan TokPa: TokPa & Tokma (40% Selasa & Khamis, 60% Sabtu & Ahad)
         const tokpaProb = isSat ? VISIT_PLAN.tokpaGroup.saturdayProb : isSun ? VISIT_PLAN.tokpaGroup.sundayProb : (isTue || isThu) ? VISIT_PLAN.tokpaGroup.tuesdayProb : 0;
         if (Math.random() < tokpaProb) {
           VISIT_PLAN.tokpaGroup.members.forEach(id => {
@@ -1531,7 +1512,6 @@
           });
         }
 
-        // 3. Kumpulan Ngah: Mummy Ngah + Zaef, Ayden, Aufa (40% Rabu, 100% Sabtu, 50% Ahad)
         const ngahProb = isSat ? VISIT_PLAN.ngahGroup.saturdayProb : isSun ? VISIT_PLAN.ngahGroup.sundayProb : isWed ? VISIT_PLAN.ngahGroup.wednesdayProb : 0;
         const ngahComes = Math.random() < ngahProb;
         if (ngahComes) {
@@ -1541,7 +1521,6 @@
           });
         }
 
-        // 4. Kumpulan Amaya: Amaya + Alina, Afiya (40% Jumaat, 100% Sabtu, 50% Ahad)
         const amayaProb = isSat ? VISIT_PLAN.amayaGroup.saturdayProb : isSun ? VISIT_PLAN.amayaGroup.sundayProb : isFri ? VISIT_PLAN.amayaGroup.fridayProb : 0;
         const amayaComes = Math.random() < amayaProb;
         if (amayaComes) {
@@ -1551,7 +1530,6 @@
           });
         }
 
-        // 5. Pak Ngah: 15% Sabtu & 10% Ahad, hanya jika keluarga Ngah datang, tiba 16:30..18:30
         if (ngahComes && (isSat || isSun)) {
           const pnProb = isSat ? VISIT_PLAN.pakNgah.saturdayProb : VISIT_PLAN.pakNgah.sundayProb;
           if (Math.random() < pnProb) {
@@ -1563,7 +1541,6 @@
           }
         }
 
-        // 6. Uncle Syafiq: 25% Sabtu & 15% Ahad, hanya jika keluarga Amaya datang, tiba 16:30..18:30
         if (amayaComes && (isSat || isSun)) {
           const syProb = isSat ? VISIT_PLAN.uncleSyafiq.saturdayProb : VISIT_PLAN.uncleSyafiq.sundayProb;
           if (Math.random() < syProb) {
@@ -1575,7 +1552,23 @@
           }
         }
 
-        // Jika boot & masa kedatangan sudah berlalu (antara 06:00 hingga 20:30), munculkan serta-merta
+        // Sabtu dan Ahad: kedua-dua keluarga Mummy Ngah dan Amaya datang
+        // bersama anak-anak untuk sesi bermain sepanjang hari (08:00–20:30).
+        if (isSat || isSun) {
+          const weekendGuests = [
+            VISIT_PLAN.ngahGroup.mother, ...VISIT_PLAN.ngahGroup.kids,
+            VISIT_PLAN.amayaGroup.mother, ...VISIT_PLAN.amayaGroup.kids
+          ];
+          weekendGuests.forEach(id => {
+            const ch = characters.find(c => c.id === id);
+            if (ch) {
+              ch.wantsToVisit = true;
+              ch.scheduledArriveHour = 8.0;
+              ch.departedTonight = false;
+            }
+          });
+        }
+
         const { hourFloat } = getCurrentClock();
         if (isBoot) {
           characters.forEach(ch => {
@@ -1612,12 +1605,10 @@
       function updateScheduledArrivalsAndDepartures(dt) {
         const { hourFloat } = getCurrentClock();
 
-        // Roll pada 6:00 AM setiap hari baru
         if (timeState.lastRolledDay !== timeState.dayNumber && hourFloat >= 6.0) {
           rollVisitPlanForDay(timeState.dayNumber, false);
         }
 
-        // Kedatangan tetamu mengikut scheduledArriveHour (sebelum GUEST_LEAVE_START)
         if (hourFloat >= 6.0 && hourFloat < GUEST_LEAVE_START) {
           characters.forEach(ch => {
             if (ch.group === 'relative' && ch.wantsToVisit && !ch.departedTonight && !ch.active && hourFloat >= ch.scheduledArriveHour) {
@@ -1632,12 +1623,10 @@
           if (pakNgahCar.timer <= 0) pakNgahCar.active = false;
         }
 
-        // FASA F.3: Tetamu pulang antara GUEST_LEAVE_START (20.5) dan GUEST_LEAVE_END (21.75) SEBAGAI KUMPULAN
         if (hourFloat >= GUEST_LEAVE_START && hourFloat <= GUEST_LEAVE_END + 0.5) {
           triggerGroupDeparturesIfDue(hourFloat);
         }
 
-        // Kemas kini perjalanan pulang tetamu ke pagar
         characters.forEach(ch => {
           if (ch.group === 'relative' && ch.leavingHome && ch.active && ch.visible) {
             if (ch.swimming) {
@@ -1702,7 +1691,6 @@
 
           if (present.length === 0) continue;
 
-          // Jika sudah menghampiri GUEST_LEAVE_END atau kebarangkalian pulang malam
           if (hourFloat >= GUEST_LEAVE_END - 0.15 || Math.random() < 0.35) {
             const leaders = present.filter(p => grp.leaderIds.includes(p.id));
             const leadName = leaders.length > 0 ? leaders[0].name : present[0].name;
@@ -1710,43 +1698,66 @@
               member.leavingHome = true;
               member.departedTonight = true;
               member.actionMode = 'walk';
-              member.activity = 'Pulang ke rumah sendiri';
-              spawnBubble(member, '👋 Jumpa lagi!', true);
-              addMemory(member, `Pulang bersama kumpulan (${leadName}) pada waktu malam.`);
-              const sc = Math.floor(member.x / TILE);
-              const sr = Math.floor(member.y / TILE);
-              if (member.swimming) {
-                member.path = computeAStarPath(sc, sr, POOL.ladderC, POOL.ladderR, true, member.id)
-                  .concat(computeAStarPath(POOL.ladderC, POOL.ladderR, 19, FRONT_GATE.r - 1, false, member.id));
-              } else {
-                member.path = computeAStarPath(sc, sr, 19, FRONT_GATE.r - 1, false, member.id);
-              }
+              member.activity = `${grp.msg} bersama ${leadName}`;
+              member.path = computeAStarPath(
+                Math.floor(member.x / TILE),
+                Math.floor(member.y / TILE),
+                19,
+                FRONT_GATE.r - 1,
+                member.swimming,
+                member.id
+              );
+              addMemory(member, `${grp.msg} pada waktu malam.`);
             });
-            openFrontGate(4.5);
-            const finalTicker = (grp.key === 'ngah' || grp.key === 'amaya') && leaders.length > 0 && (leaders[0].id === 'pak_ngah' || leaders[0].id === 'uncle_syafiq')
-              ? `${leaders[0].name} mengetuai kumpulan pulang (${grp.msg}).`
-              : `${grp.msg}.`;
-            setTicker(`🌙 ${finalTicker}`);
+            setTicker(`👋 ${grp.msg} (${leadName}) — selamat jalan!`);
+            return;
           }
         }
       }
 
-      /* =========================================================================
-         6. FASA F NIGHT ROUTINE (KIDS BEDTIME, THIRSTY HAYYAN, LATE PLAN, LAMPS, ANIMALS)
-         ========================================================================= */
       let hayyanThirstyCheckedDay = 0;
 
+      function getBedSpotForCharacter(ch) {
+        const map = {
+          papa:  { x: 46.0 * TILE, y: 29.65 * TILE },
+          mama:  { x: 48.0 * TILE, y: 29.65 * TILE },
+          isaac: { x: 33.5 * TILE, y: 29.5 * TILE },
+          hayyan:{ x: 37.5 * TILE, y: 29.5 * TILE },
+          aufa:  { x: 33.5 * TILE, y: 35.5 * TILE },
+          afiya: { x: 37.5 * TILE, y: 35.5 * TILE },
+          alina: { x: 33.5 * TILE, y: 29.5 * TILE },
+          zaef:  { x: 37.5 * TILE, y: 29.5 * TILE },
+          ayden: { x: 33.5 * TILE, y: 35.5 * TILE }
+        };
+        if (map[ch.id]) return map[ch.id];
+        // Pelawat dewasa menggunakan katil tetamu di bilik anak-anak apabila perlu.
+        const fallbackSpots = [
+          { x: 45.5 * TILE, y: 29.75 * TILE },
+          { x: 47.2 * TILE, y: 29.75 * TILE },
+          { x: 33.5 * TILE, y: 29.5 * TILE },
+          { x: 37.5 * TILE, y: 35.5 * TILE }
+        ];
+        return fallbackSpots[Math.abs(ch.id.charCodeAt(0)) % fallbackSpots.length];
+      }
+
+      function isAnyCharacterWatchingTv() {
+        return characters.some(c => {
+          if (!c.active || !c.visible || c.isPet || c.actionMode === 'sleep') return false;
+          if (c.activityKey === 'tv') return true;
+          const distToTvArea = Math.hypot(c.x - 20.5 * TILE, c.y - 16.5 * TILE);
+          return distToTvArea <= 3.5 * TILE && c.path.length === 0;
+        });
+      }
+
       function updateNightRoutine(dt) {
-        const { hourFloat, hours24 } = getCurrentClock();
+        const { hourFloat } = getCurrentClock();
         const isNight = hourFloat >= NIGHT_START || hourFloat < NIGHT_END;
 
-        // 1. Rancangan malam Papa & Mama pada 21:30 setiap hari
         if (timeState.lastNightPlanDay !== timeState.dayNumber && hourFloat >= 21.5) {
           timeState.lastNightPlanDay = timeState.dayNumber;
           assignEveningPlansForParents();
         }
 
-        // 2. Rutin tidur Isaac & Hayyan (30 minit sebelum BEDTIME_KIDS)
         const kidBed = getBedtimeKidsThreshold();
         const prepStart = kidBed - 0.5;
         ['isaac', 'hayyan'].forEach(kidId => {
@@ -1772,26 +1783,28 @@
               if (mama && mama.active && mama.visible) {
                 spawnBubble(mama, 'Jom mandi, gosok gigi & tidur ya sayang.');
               }
-              setCharacterActivity(kid, 'Mandi sebelum tidur (rutin malam)', 'hygiene', 36, 31, false, 'idle', 6);
+              setCharacterActivity(kid, 'Mandi sebelum tidur (rutin malam)', 'hygiene', 68, 31, false, 'idle', 6);
             } else if (kid.bedtimePrepStep === 'bath' && kid.path.length === 0) {
               kid.bedtimePrepStep = 'teeth';
-              setCharacterActivity(kid, 'Menggosok gigi sebelum masuk tidur', 'hygiene', 37, 30, false, 'idle', 5);
+              setCharacterActivity(kid, 'Menggosok gigi sebelum masuk tidur', 'hygiene', 68, 30, false, 'idle', 5);
             } else if (kid.bedtimePrepStep === 'teeth' && kid.path.length === 0) {
               kid.bedtimePrepStep = 'bed';
-              const bedSpot = kid.id === 'isaac' ? { c: 51, r: 30 } : { c: 51, r: 35 };
-              setCharacterActivity(kid, 'Masuk ke bilik tidur', 'sleep', bedSpot.c, bedSpot.r, false, 'sleep', 12);
+              const bedPt = getBedSpotForCharacter(kid);
+              setCharacterActivity(kid, 'Baring tidur atas katil (rutin malam)', 'sleep', Math.floor(bedPt.x / TILE), Math.floor(bedPt.y / TILE), false, 'sleep', 12);
+            } else if (kid.bedtimePrepStep === 'bed' && !kid.pendingSleep) {
+              const bedPt = getBedSpotForCharacter(kid);
+              setCharacterActivity(kid, 'Baring tidur atas katil (rutin malam)', 'sleep', Math.floor(bedPt.x / TILE), Math.floor(bedPt.y / TILE), false, 'sleep', 12);
             }
           } else if (hourFloat >= kidBed || hourFloat < prof.wakeHour) {
-            if (!isSleeping && kid.path.length === 0) {
-              const bedSpot = kid.id === 'isaac' ? { c: 51, r: 30 } : { c: 51, r: 35 };
-              setCharacterActivity(kid, 'Tidur malam di bilik tidur', 'sleep', bedSpot.c, bedSpot.r, false, 'sleep', 15);
+            if (!isSleeping && !kid.pendingSleep && kid.path.length === 0) {
+              const bedPt = getBedSpotForCharacter(kid);
+              setCharacterActivity(kid, 'Tidur baring atas katil di bilik tidur', 'sleep', Math.floor(bedPt.x / TILE), Math.floor(bedPt.y / TILE), false, 'sleep', 15);
             }
           } else {
             kid.bedtimePrepStep = null;
           }
         });
 
-        // 3. 10% setiap malam Hayyan terjaga kehausan, berjalan ke dapur, Mama/Papa teman tidur semula
         if (isNight && hayyanThirstyCheckedDay !== timeState.dayNumber && hourFloat >= 22.5) {
           hayyanThirstyCheckedDay = timeState.dayNumber;
           if (Math.random() < 0.10) {
@@ -1812,20 +1825,20 @@
           }
         }
 
-        // 4. Papa & Mama bangun pagi & tidur ikut rancangan malam
         const papa = characters.find(c => c.id === 'papa');
         const mama = characters.find(c => c.id === 'mama');
         const work = isWorkday();
 
         if (papa && papa.active && papa.visible) {
-          const papaWake = work ? 6.25 : 7.0; // 6:15 hari bekerja, 7:00 hujung minggu
+          const papaWake = work ? 6.25 : 7.0;
           if (hourFloat >= papaWake && hourFloat < 21.0 && papa.actionMode === 'sleep') {
             papa.actionMode = 'idle';
             papa.needs.tenaga = Math.max(papa.needs.tenaga, 85);
             addMemory(papa, `Bangun pagi pada pukul ${work ? '6:15 AM' : '7:00 AM'}.`);
             chooseNextActivityForCharacter(papa);
-          } else if (papa.eveningPlan && hourFloat >= papa.eveningPlan.sleepAt && papa.actionMode !== 'sleep') {
-            setCharacterActivity(papa, 'Tidur malam di Bilik Tidur', 'sleep', 45, 32, false, 'sleep', 15);
+          } else if (papa.eveningPlan && hourFloat >= papa.eveningPlan.sleepAt && papa.actionMode !== 'sleep' && !papa.pendingSleep) {
+            const bedPt = getBedSpotForCharacter(papa);
+            setCharacterActivity(papa, 'Tidur baring atas katil di Bilik Tidur', 'sleep', Math.floor(bedPt.x / TILE), Math.floor(bedPt.y / TILE), false, 'sleep', 15);
           }
         }
 
@@ -1838,13 +1851,13 @@
           } else if (mama.eveningPlan && hourFloat >= mama.eveningPlan.sleepAt - 0.15 && hourFloat < mama.eveningPlan.sleepAt && mama.activityKey !== 'check_house') {
             setCharacterActivity(mama, 'Menyemak pintu & lampu sebelum tidur', 'check_house', 24, 38, false, 'idle', 4);
             addMemory(mama, 'Menyemak pintu dan lampu rumah sebelum tidur.');
-          } else if (mama.eveningPlan && hourFloat >= mama.eveningPlan.sleepAt && mama.actionMode !== 'sleep') {
-            setCharacterActivity(mama, 'Tidur malam di Bilik Tidur', 'sleep', 47, 32, false, 'sleep', 15);
+          } else if (mama.eveningPlan && hourFloat >= mama.eveningPlan.sleepAt && mama.actionMode !== 'sleep' && !mama.pendingSleep) {
+            const bedPt = getBedSpotForCharacter(mama);
+            setCharacterActivity(mama, 'Tidur baring atas katil di Bilik Tidur', 'sleep', Math.floor(bedPt.x / TILE), Math.floor(bedPt.y / TILE), false, 'sleep', 15);
           }
         }
 
-        // 5. Haiwan pulang ke ANIMAL_HOMES dari 19:30 (Ciken paling awal sekitar senja) & keluar ~06:00
-        updateAnimalHomes(hourFloat, hours24);
+        updateAnimalHomes(hourFloat);
       }
 
       function assignEveningPlansForParents() {
@@ -1855,14 +1868,13 @@
         const work = isWorkday();
 
         if (isFriOrSat) {
-          // Jumaat & Sabtu malam: cenderung menonton bersama (50%) dan tidur lewat (~00:30), sebelum 01:00
           const r = Math.random();
           if (papa) {
             if (r < 0.50) {
-              papa.eveningPlan = { type: 'tv_together', sleepAt: 0.5 }; // 00:30
+              papa.eveningPlan = { type: 'tv_together', sleepAt: 0.5 };
               setCharacterActivity(papa, 'Menonton TV bersama Mama pada malam hujung minggu', 'tv', 20, 16, false, 'idle', 14);
             } else {
-              papa.eveningPlan = { type: 'late_chill', sleepAt: 0.75 }; // 00:45
+              papa.eveningPlan = { type: 'late_chill', sleepAt: 0.75 };
               setCharacterActivity(papa, 'Bersantai malam sebelum tidur lewat', 'rest', 22, 16, false, 'idle', 14);
             }
             addMemory(papa, `Rancangan malam: ${papa.activity}.`);
@@ -1881,7 +1893,6 @@
         }
 
         if (work) {
-          // Hari bekerja: Papa 45% kerja lewat di Pejabat WFH (~23:30), 20% TV seorang diri (~23:00), 35% tidur awal (~22:15)
           if (papa) {
             const rp = Math.random();
             if (rp < 0.45) {
@@ -1897,7 +1908,6 @@
             addMemory(papa, `Rancangan malam: ${papa.activity}.`);
           }
 
-          // Mama: 45% TV seorang diri dengan snek (~23:15), 35% kemas dapur & lipat pakaian (~22:30 lalu tidur), 20% berbual & tonton bersama Papa
           if (mama) {
             const rm = Math.random();
             if (rm < 0.45) {
@@ -1915,9 +1925,9 @@
         }
       }
 
-      function updateAnimalHomes(hourFloat, hours24) {
+      function updateAnimalHomes(hourFloat) {
         const petSchedule = {
-          ayam:   { enterHour: 19.2, exitHour: 6.0 }, // Ciken masuk paling awal sekitar senja
+          ayam:   { enterHour: 19.2, exitHour: 6.0 },
           itik:   { enterHour: 19.6, exitHour: 6.1 },
           kucing: { enterHour: 20.0, exitHour: 6.2 }
         };
@@ -1945,7 +1955,7 @@
                 pet.x = home.homeSpot.x;
                 pet.y = home.homeSpot.y;
                 pet.actionMode = 'sleep';
-                pet.visible = false; // Tidur di dalam rumah haiwan (ikon tidur & zzz dilukis di atas rumah)
+                pet.visible = false;
                 pet.activity = `Tidur nyenyak di dalam ${home.label}`;
               }
             } else {
@@ -1953,7 +1963,6 @@
               pet.actionMode = 'sleep';
             }
           } else {
-            // Keluar ~06:00
             if (pet.actionMode === 'sleep' || !pet.visible) {
               pet.active = true;
               pet.visible = true;
@@ -1968,16 +1977,16 @@
       }
 
       /* =========================================================================
-         7. FASA E SOCIAL INTERACTIONS, SPEECH BUBBLES & ADULT RESPONSIBILITIES
+         7. INTERAKSI SOSIAL, GELEMBUNG UCAPAN & TANGGUNGJAWAB DEWASA
          ========================================================================= */
-      const activeBubbles = []; // { id, ch, text, emojiOnly, alpha, ttl, maxTtl, x, y }
-      const pairCooldowns = new Map(); // "idA|idB" -> realSecondsRemaining
-      const activeConversations = []; // { a, b, lines, step, timer, pairType }
+      const activeBubbles = [];
+      const pairCooldowns = new Map();
+      const pairDialogueHistory = new Map(); // Phase 4A.2: elak dialog berulang untuk pasangan sama
+      const activeConversations = [];
       let interactionThrottleAccum = 0;
 
       function spawnBubble(ch, text, emojiOnly = false, duration = 2.5) {
         if (!ch || !ch.active || !ch.visible) return;
-        // Ganti gelembung sedia ada untuk watak yang sama supaya kemas
         const existingIdx = activeBubbles.findIndex(b => b.chId === ch.id);
         if (existingIdx !== -1) activeBubbles.splice(existingIdx, 1);
         activeBubbles.push({
@@ -2057,11 +2066,37 @@
 
       function startConversation(chA, chB) {
         const pairKey = getPairKey(chA.id, chB.id);
-        pairCooldowns.set(pairKey, 20.0); // 20s real cooldown
+        pairCooldowns.set(pairKey, 20.0);
 
         const pType = getPairDialogueType(chA, chB);
         const bank = DIALOGUE_BANK[pType] || DIALOGUE_BANK.dewasa_dewasa;
-        const chosenExchange = bank[Math.floor(Math.random() * bank.length)];
+        // Dialog dipilih mengikut konteks aktiviti dan sejarah pasangan; jangan ulang exchange terakhir.
+        const contextKey = (chA.activityKey === 'play' || chB.activityKey === 'play' ||
+          chA.activityKey === 'playroom' || chB.activityKey === 'playroom' ||
+          chA.activityKey === 'slide' || chB.activityKey === 'slide' ||
+          chA.activityKey === 'swing' || chB.activityKey === 'swing' ||
+          chA.activityKey === 'seesaw' || chB.activityKey === 'seesaw') ? 'play' :
+          (chA.activityKey === 'poolside' || chB.activityKey === 'poolside' ||
+           chA.activityKey === 'swim' || chB.activityKey === 'swim') ? 'pool' :
+          (chA.activityKey === 'eat' || chB.activityKey === 'eat' ||
+           chA.activityKey === 'cook' || chB.activityKey === 'cook') ? 'food' : 'general';
+        const history = pairDialogueHistory.get(pairKey) || [];
+        const available = bank.map((line, index) => ({ line, index })).filter(x => !history.includes(x.index));
+        const pool = available.length ? available : bank.map((line, index) => ({ line, index }));
+        const chosen = pool[Math.floor(Math.random() * pool.length)];
+        const chosenExchange = chosen.line.slice(); // clone supaya dialog asal tidak berubah secara global
+        history.push(chosen.index);
+        while (history.length > Math.min(3, bank.length - 1)) history.shift();
+        pairDialogueHistory.set(pairKey, history);
+        // Contextual opener replaces one generic exchange when the activity supports it.
+        const contextualOpeners = {
+          play: ['Jom main sama-sama, seronok kalau ramai!', 'Wah, nampak menarik aktiviti ni!', 'Kita cuba aktiviti lain selepas ini ya.'],
+          pool: ['Seronok suasana tepi kolam hari ini.', 'Jom berehat sekejap di tepi air.', 'Hati-hati dan ikut arahan keselamatan ya.'],
+          food: ['Makanan nampak sedap, jom makan bersama.', 'Nak tambah sedikit lagi?', 'Terima kasih sediakan makanan untuk keluarga.']
+        };
+        if (contextKey !== 'general' && Math.random() < 0.35) {
+          chosenExchange[0] = contextualOpeners[contextKey][Math.floor(Math.random() * contextualOpeners[contextKey].length)];
+        }
         const lines = [
           { speaker: chA, listener: chB, text: chosenExchange[0] },
           { speaker: chB, listener: chA, text: chosenExchange[1] }
@@ -2070,7 +2105,6 @@
           lines.push({ speaker: chA, listener: chB, text: '😊 Seronok berbual dengan kamu!' });
         }
 
-        // Kedua-dua berhenti dan saling menghadap
         chA.path = [];
         chB.path = [];
         chA.facing = chB.x >= chA.x ? 1 : -1;
@@ -2090,7 +2124,6 @@
 
         spawnBubble(chA, lines[0].text, false, 2.5);
 
-        // Hasil: rel +3 hingga +6, sosial & mood naik, simpan memori
         const deltaRel = 3 + Math.floor(Math.random() * 4);
         if (chA.rel[chB.id] !== undefined) chA.rel[chB.id] = Math.min(100, chA.rel[chB.id] + deltaRel);
         if (chB.rel[chA.id] !== undefined) chB.rel[chA.id] = Math.min(100, chB.rel[chA.id] + deltaRel);
@@ -2107,13 +2140,11 @@
       }
 
       function updateConversationsAndBubbles(dt) {
-        // Kemas kini cooldown pasangan
         for (const [k, val] of pairCooldowns.entries()) {
           if (val - dt <= 0) pairCooldowns.delete(k);
           else pairCooldowns.set(k, val - dt);
         }
 
-        // Kemas kini perbualan aktif (2.5s setiap gelembung)
         for (let i = activeConversations.length - 1; i >= 0; i--) {
           const conv = activeConversations[i];
           conv.timer -= dt;
@@ -2131,7 +2162,6 @@
           }
         }
 
-        // Kemas kini gelembung ucapan (alpha pudar masuk/keluar)
         for (let i = activeBubbles.length - 1; i >= 0; i--) {
           const b = activeBubbles[i];
           b.ttl -= dt;
@@ -2150,7 +2180,6 @@
         }
       }
 
-      // Throttle 0.5s masa sebenar untuk interaksi berdekatan (<= 3 jubin, zon sama, tidak tidur/beratur)
       function runSocialInteractionTick() {
         const awakeHumans = characters.filter(c =>
           c.active && c.visible && !c.isPet && !c.leavingHome && c.actionMode !== 'sleep'
@@ -2173,9 +2202,13 @@
             if (pairCooldowns.has(pairKey)) continue;
 
             const socialNeedFactor = 1.35 - Math.min(a.needs.sosial, b.needs.sosial) / 120;
-            const relScore = ((a.rel[b.id] || 50) + (b.rel[a.id] || 50)) / 200; // 0..1
+            const relScore = ((a.rel[b.id] || 50) + (b.rel[a.id] || 50)) / 200;
             const traitCeria = ((PROFILES[a.id]?.traits.ceria || 0.7) + (PROFILES[b.id]?.traits.ceria || 0.7)) * 0.5;
-            const prob = Math.min(0.65, 0.08 * socialNeedFactor * (0.6 + relScore) * (0.7 + traitCeria));
+            const traitAffection = ((PROFILES[a.id]?.traits.penyayang || 0.5) + (PROFILES[b.id]?.traits.penyayang || 0.5)) * 0.5;
+            const urgencyPenalty = (Math.max(a.needs.lapar, b.needs.lapar) > 88 ? 0.45 : 1) *
+              (Math.max(a.needs.tenaga, b.needs.tenaga) > 92 ? 0.55 : 1);
+            const sameActivityBonus = (a.activityKey && a.activityKey === b.activityKey) ? 1.18 : 1;
+            const prob = Math.min(0.58, 0.075 * socialNeedFactor * (0.55 + relScore) * (0.65 + traitCeria + traitAffection * 0.25) * urgencyPenalty * sameActivityBonus);
 
             if (Math.random() < prob) {
               startConversation(a, b);
@@ -2185,7 +2218,6 @@
         }
       }
 
-      // Tanggungjawab dewasa & perselisihan buaian (FASA E.5)
       function updateAdultResponsibilities(dt) {
         const kidsUnder7 = characters.filter(c =>
           c.active && c.visible && !c.isPet && !c.leavingHome && c.actionMode !== 'sleep' && (PROFILES[c.id]?.ageYears || 99) < 7
@@ -2194,14 +2226,12 @@
           c.active && c.visible && !c.isPet && !c.leavingHome && c.actionMode !== 'sleep' && (PROFILES[c.id]?.ageYears || 0) >= 18
         );
 
-        // 5a) Kanak-kanak bawah 7 tahun TIDAK berenang tanpa dewasa dalam 8 jubin dari kolam
         const poolCenterX = ((POOL.c1 + POOL.c2 + 1) * 0.5) * TILE;
         const poolCenterY = ((POOL.r1 + POOL.r2 + 1) * 0.5) * TILE;
         const adultsNearPool = adults.filter(ad => Math.hypot(ad.x - poolCenterX, ad.y - poolCenterY) <= 8 * TILE);
 
         kidsUnder7.forEach(kd => {
           if (kd.swimming && adultsNearPool.length === 0) {
-            // Keluar kolam jika tiada dewasa dalam 8 jubin
             kd.swimming = false;
             kd.actionMode = 'idle';
             kd.path = computeAStarPath(Math.floor(kd.x / TILE), Math.floor(kd.y / TILE), POOL.ladderC, POOL.ladderR, false, kd.id);
@@ -2220,7 +2250,6 @@
           }
         });
 
-        // 5e) Perselisihan kecil buaian: dua kanak-kanak mahu buaian sama -> 20% seorang merajuk 😤 10s; dewasa menenangkan ("Bergilir ya")
         const swingSeekers = kidsUnder7.filter(k => k.activityKey === 'swing' && Math.hypot(k.x - PLAYGROUND.swing.x, k.y - PLAYGROUND.swing.y) < 36);
         if (swingSeekers.length >= 2 && !swingSeekers[0].disputeCooldown) {
           swingSeekers[0].disputeCooldown = 16;
@@ -2249,7 +2278,6 @@
           }
         });
 
-        // 5f) Bayi menangis 😢: dewasa terdekat datang dan menenangkan; berhenti selepas 6s. Zaef (7) membantu menjaga Aufa & Afiya.
         for (const babyId of FAMILY.bayi) {
           const baby = characters.find(c => c.id === babyId);
           if (!baby || !baby.active || !baby.visible) continue;
@@ -2305,7 +2333,6 @@
           }
         }
 
-        // Zaef (7) menegur adik sepupu yang nakal & membantu menjaga Aufa & Afiya
         const zaef = characters.find(c => c.id === 'zaef' && c.active && c.visible && c.actionMode !== 'sleep');
         if (zaef && Math.random() < dt * 0.08) {
           const naughtyKid = kidsUnder7.find(k => k.id !== 'zaef' && Math.hypot(k.x - zaef.x, k.y - zaef.y) < 3.5 * TILE && k.actionMode === 'play');
@@ -2331,7 +2358,6 @@
         return adults[0] || null;
       }
 
-      // 5b) Papa pulang (6PM): kanak-kanak di rumah berlari ke pagar, ❤️ "Papa dah balik!"
       function onPapaReturnedHome() {
         const kidsAtHome = characters.filter(c =>
           c.active && c.visible && !c.isPet && !c.leavingHome && c.actionMode !== 'sleep' && (PROFILES[c.id]?.ageYears || 99) < 13
@@ -2343,7 +2369,6 @@
         });
       }
 
-      // 5c) Mama memanggil makan ("Jom makan!"): semua dalam rumah dan halaman ke meja makan (hanya yang berjaga)
       function mamaCallToEat() {
         const mama = characters.find(c => c.id === 'mama');
         if (mama && mama.active && mama.visible) {
@@ -2365,7 +2390,6 @@
         setTicker('🍽️ Mama memanggil: "Jom makan!" Semua yang berjaga menuju ke meja makan.');
       }
 
-      // FASA G.7: Aktiviti kumpulan baharu - kejar-kejar & masak-masak (peserta >= 3)
       let tagItCharacterId = null;
 
       function startGroupKejarKejar() {
@@ -2421,13 +2445,13 @@
       }
 
       /* =========================================================================
-         8. WEIGHTED ACTIVITY SELECTION (FASA D.2, E.3, E.4, G.5, G.6, G.7, F.8)
+         8. PEMILIHAN AKTIVITI BERWAJARAN
          ========================================================================= */
       const ACTIVITY_CANDIDATES = [
         { key: 'cook',        label: 'Memasak & menyediakan hidangan di Dapur', c: 45, r: 15, mode: 'eat',  swim: false, adultOnly: true },
         { key: 'eat',         label: 'Menikmati makanan di Ruang Makan',        c: 44, r: 17, mode: 'eat',  swim: false },
         { key: 'tidy',        label: 'Mengemas & menyusun Ruang Tamu',          c: 22, r: 22, mode: 'idle', swim: false, adultOnly: true },
-        { key: 'laundry',     label: 'Menguruskan kain di Bilik Dobi',          c: 68, r: 31, mode: 'idle', swim: false, adultOnly: true },
+        { key: 'pet_feed',    label: 'Memberi makan haiwan peliharaan',          c: 28, r: 48, mode: 'eat', swim: false, adultOnly: true },
         { key: 'care_kids',   label: 'Memerhati & menemani anak-anak bermain',  c: 37, r: 46, mode: 'idle', swim: false, adultOnly: true },
         { key: 'play_kids',   label: 'Bermain bersama anak-anak di halaman',    c: 35, r: 47, mode: 'play', swim: false, adultOnly: true },
         { key: 'story',       label: 'Bercerita & berbual mesra di Ruang Tamu', c: 20, r: 22, mode: 'idle', swim: false, adultOnly: true },
@@ -2446,11 +2470,30 @@
         { key: 'swim',        label: 'Berenang menyegarkan di Kolam Renang',    c: 68, r: 47, mode: 'swim', swim: true, noToddler: true },
         { key: 'poolside',    label: 'Duduk santai di tepi Kolam Renang',       c: 59, r: 47, mode: 'idle', swim: false },
         { key: 'pets',        label: 'Bermain & membelai haiwan peliharaan',    c: 31, r: 48, mode: 'play', swim: false },
-        { key: 'hygiene',     label: 'Membersihkan diri di Bilik Mandi',        c: 36, r: 31, mode: 'idle', swim: false }
+        { key: 'hygiene',     label: 'Membersihkan diri di Bilik Mandi',        c: 68, r: 31, mode: 'idle', swim: false }
       ];
+
+      function getRecentActivityPenalty(ch, activityKey) {
+        const history = Array.isArray(ch.activityHistory) ? ch.activityHistory : [];
+        const nowDay = timeState.dayNumber;
+        const nowMinute = Math.floor(timeState.virtualMinutes % 1440);
+        let penalty = 0;
+        for (let i = history.length - 1, seen = 0; i >= 0 && seen < 5; i--) {
+          const item = history[i];
+          if (!item || item.key !== activityKey) continue;
+          seen++;
+          const elapsed = (nowDay - (item.day || nowDay)) * 1440 + nowMinute - (item.minute || 0);
+          if (elapsed < 0) continue;
+          if (elapsed < 20) penalty += 1.35;
+          else if (elapsed < 45) penalty += 0.85;
+          else if (elapsed < 90) penalty += 0.35;
+        }
+        return Math.min(2.2, penalty);
+      }
 
       function chooseNextActivityForCharacter(ch) {
         if (!ch.active || !ch.visible || ch.leavingHome) return;
+        if (ch.routineLock) return;
         const { hours24, hourFloat } = getCurrentClock();
         const prof = PROFILES[ch.id] || { ageYears: 25, traits: {}, likes: [], dislikes: [], bedHour: 22, wakeHour: 6 };
         const isKid = prof.ageYears < 13;
@@ -2464,7 +2507,6 @@
           c.active && c.visible && !c.isPet && !c.leavingHome && c.actionMode !== 'sleep' && (PROFILES[c.id]?.ageYears || 99) < 7
         );
 
-        // 1. PERATURAN KERAS
         if (ch.id === 'papa') {
           if (isPapaWorkTime()) {
             if (ch.carPhase === 'at_home' && familyCar.state === 'parked') {
@@ -2474,42 +2516,38 @@
             }
             if (ch.carPhase === 'at_work' || ch.carPhase === 'boarding_out') return;
           } else if (!work && isSun && hours24 >= 14 && hours24 < 16 && ch.actionMode !== 'sleep' && !isWalkingNow) {
-            // Ahad: Papa tidur petang ringkas
             setCharacterActivity(ch, 'Tidur petang ringkas di hari Ahad', 'sleep', 45, 32, false, 'sleep', 8);
             return;
           }
         }
 
-        // Tidur siang bayi (12:00 - 15:00 hari biasa; ~1 jam pada Ahad)
         if (isToddler) {
           const napEnd = isSun ? 13.0 : 15.0;
           if (hourFloat >= 12.0 && hourFloat < napEnd) {
             if (ch.actionMode !== 'sleep' && !isWalkingNow) {
-              const cSpot = ch.id === 'aufa' ? { c: 44, r: 35 } : { c: 47, r: 35 };
+              const cSpot = ch.id === 'aufa' ? { c: 33, r: 35 } : { c: 37, r: 35 };
               setCharacterActivity(ch, 'Tidur siang di bilik tidur', 'sleep', cSpot.c, cSpot.r, false, 'sleep', 10);
             }
             return;
           }
         }
 
-        // Tidur siang kanak-kanak (12:00 - 14:00 hari biasa; ~1 jam pada Ahad)
         if ((ch.id === 'isaac' || ch.id === 'hayyan') && !isToddler) {
           const napEnd = isSun ? 13.0 : 14.0;
           if (hourFloat >= 12.0 && hourFloat < napEnd) {
             if (ch.actionMode !== 'sleep' && !isWalkingNow) {
-              const bedSpot = ch.id === 'isaac' ? { c: 51, r: 30 } : { c: 51, r: 35 };
+              const bedSpot = ch.id === 'isaac' ? { c: 33, r: 29 } : { c: 37, r: 29 };
               setCharacterActivity(ch, 'Tidur tengah hari di katil', 'sleep', bedSpot.c, bedSpot.r, false, 'sleep', 10);
             }
             return;
           }
         }
 
-        // Tidur malam
         const kidBed = getBedtimeKidsThreshold();
         const effectiveBed = isKid ? kidBed : prof.bedHour;
         const isNightSleep = hourFloat >= effectiveBed || hourFloat < prof.wakeHour;
         if (isNightSleep && !ch.isPet) {
-          if (ch.actionMode !== 'sleep' && !isWalkingNow) {
+          if (ch.actionMode !== 'sleep' && !isWalkingNow && !ch.pendingSleep) {
             const bedSpots = [
               { c: 45, r: 32 }, { c: 47, r: 32 }, { c: 51, r: 30 }, { c: 51, r: 35 }, { c: 44, r: 36 }
             ];
@@ -2519,7 +2557,6 @@
           return;
         }
 
-        // Waktu makan utama (7 AM, 1 PM, 7 PM)
         if ((hours24 === 7 || hours24 === 13 || hours24 === 19) && ch.needs.lapar > 45 && ch.actionMode !== 'eat' && !isWalkingNow && !ch.isPet) {
           if (ch.id === 'mama') {
             mamaCallToEat();
@@ -2530,19 +2567,37 @@
           return;
         }
 
-        // Haiwan peliharaan (diurus oleh updateAnimalHomes selepas 19:15)
         if (ch.isPet) {
-          const petSpots = [
-            { key: 'pets', label: 'Berjalan santai di halaman rumah', c: 28 + Math.floor(Math.random() * 24), r: 43 + Math.floor(Math.random() * 9), mode: 'walk' },
-            { key: 'pets', label: 'Bermanja di Ruang Tamu', c: 19 + Math.floor(Math.random() * 10), r: 16 + Math.floor(Math.random() * 6), mode: 'idle' },
-            { key: 'poolside', label: 'Berjalan-jalan berhampiran tepi kolam', c: 58, r: 47 + Math.floor(Math.random() * 4), mode: 'walk' }
-          ];
+          const humanInteraction = characters.filter(h => !h.isPet && h.active && h.visible && ['pets', 'pet_feed'].includes(h.activityKey))
+            .sort((a, b) => Math.hypot(a.x - ch.x, a.y - ch.y) - Math.hypot(b.x - ch.x, b.y - ch.y))[0];
+          if (humanInteraction && Math.hypot(humanInteraction.x - ch.x, humanInteraction.y - ch.y) < 10 * TILE) {
+            const targetC = Math.floor(humanInteraction.x / TILE) + (ch.id === 'kucing' ? -1 : 1);
+            const targetR = Math.floor(humanInteraction.y / TILE);
+            const isFeed = humanInteraction.activityKey === 'pet_feed';
+            setCharacterActivity(ch, isFeed ? `Menghampiri ${humanInteraction.name} untuk makan` : `Bermain bersama ${humanInteraction.name}`, isFeed ? 'eat' : 'pets', targetC, targetR, false, isFeed ? 'eat' : 'play', 6 + Math.random() * 4);
+            return;
+          }
+          if (ch.needs && ch.needs.lapar > 58) {
+            const feedSpot = ch.id === 'kucing' ? { c: 29, r: 48 } : ch.id === 'ayam' ? { c: 14, r: 47 } : { c: 17, r: 47 };
+            setCharacterActivity(ch, 'Mencari makanan di kawasan mangkuk makanan', 'eat', feedSpot.c, feedSpot.r, false, 'eat', 8 + Math.random() * 4);
+            return;
+          }
+          const petSpots = ch.id === 'kucing'
+            ? [
+                { key: 'pets', label: 'Berjalan santai di halaman rumah', c: 28 + Math.floor(Math.random() * 24), r: 43 + Math.floor(Math.random() * 9), mode: 'walk' },
+                { key: 'pets', label: 'Bermanja & masuk ke Ruang Tamu', c: 20 + Math.floor(Math.random() * 8), r: 16 + Math.floor(Math.random() * 5), mode: 'idle' },
+                { key: 'poolside', label: 'Berjalan-jalan berhampiran tepi kolam', c: 58, r: 47 + Math.floor(Math.random() * 4), mode: 'walk' }
+              ]
+            : [
+                { key: 'pets', label: 'Berjalan-jalan di halaman luar', c: 28 + Math.floor(Math.random() * 24), r: 43 + Math.floor(Math.random() * 9), mode: 'walk' },
+                { key: 'poolside', label: 'Berjalan terkedek-kedek di luar tepi kolam', c: 58, r: 47 + Math.floor(Math.random() * 4), mode: 'walk' },
+                { key: 'garden', label: 'Mencari makanan di halaman luar', c: 12 + Math.floor(Math.random() * 10), r: 44 + Math.floor(Math.random() * 8), mode: 'walk' }
+              ];
           const pick = petSpots[Math.floor(Math.random() * petSpots.length)];
           setCharacterActivity(ch, pick.label, pick.key, pick.c, pick.r, false, pick.mode, 6 + Math.random() * 5);
           return;
         }
 
-        // Sabtu: Papa mencuci kereta (~15 minit virtual) & BBQ petang
         if (isSat && ch.id === 'papa' && hours24 >= 8 && hours24 < 11 && ch.activityKey !== 'wash_car' && Math.random() < 0.45) {
           setCharacterActivity(ch, 'Mencuci kereta keluarga di halaman 🧽', 'wash_car', 19, 51, false, 'play', 8);
           spawnBubble(ch, '🧽 Cuci kereta dulu hari Sabtu!');
@@ -2555,17 +2610,6 @@
           return;
         }
 
-        // Ahad: kejar-kejar & masak-masak
-        if (isSun && isKid && !isToddler && hours24 >= 9 && hours24 < 17 && Math.random() < 0.25) {
-          if (Math.random() < 0.5) {
-            startGroupKejarKejar();
-          } else {
-            startGroupMasakMasak();
-          }
-          return;
-        }
-
-        // 2. SKOR BERWAJARAN
         let bestCand = null;
         let bestScore = -1;
 
@@ -2576,9 +2620,8 @@
           if (cand.satOnly && !isSat) continue;
           if (cand.swim && (hours24 < 8 || hours24 > 18)) continue;
           if (cand.swim && prof.dislikes.includes('swim')) continue;
-          if (cand.swim && ch.id === 'hayyan') continue;
+          if (cand.swim && ch.id === 'hayyan' && !ch.poolSupervised) continue;
 
-          // FASA E.5a: Kanak-kanak bawah 7 minta izin sebelum berenang jika tiada dewasa dalam 8 jubin dari kolam
           if (cand.swim && prof.ageYears < 7) {
             const poolCenterX = ((POOL.c1 + POOL.c2 + 1) * 0.5) * TILE;
             const poolCenterY = ((POOL.r1 + POOL.r2 + 1) * 0.5) * TILE;
@@ -2601,15 +2644,30 @@
           }
 
           let baseWeight = 1.0;
-          if (ch.id === 'mama' && ['cook', 'tidy', 'laundry', 'care_kids'].includes(cand.key)) baseWeight *= 2.5;
+          if (cand.key === 'pets' || cand.key === 'pet_feed') {
+            const nearbyPet = characters.find(p => p.isPet && p.active && p.visible && Math.hypot(p.x - ch.x, p.y - ch.y) < 14 * TILE);
+            if (nearbyPet) baseWeight *= cand.key === 'pet_feed' ? 1.9 : 1.7;
+            else if (cand.key === 'pet_feed') baseWeight *= 0.45;
+          }
+          if (ch.id === 'mama' && ['cook', 'tidy', 'pet_feed', 'care_kids'].includes(cand.key)) baseWeight *= 2.5;
           if (ch.id === 'papa' && ['play_kids', 'work', 'chat', 'wash_car'].includes(cand.key)) baseWeight *= 2.1;
           if ((ch.id === 'atok' || ch.id === 'tokma') && ['cook', 'story', 'care_kids', 'chat'].includes(cand.key)) baseWeight *= 2.3;
           if (ch.id === 'atok_bas' && ['garden', 'read_news', 'chat', 'care_kids'].includes(cand.key)) baseWeight *= 2.4;
           if ((ch.id === 'mummy_ngah' || ch.id === 'amaya') && ['care_kids', 'cook', 'chat'].includes(cand.key)) baseWeight *= 2.3;
           if ((ch.id === 'pak_ngah' || ch.id === 'uncle_syafiq') && ['chat', 'play_kids', 'rest'].includes(cand.key)) baseWeight *= 2.1;
-          if (isKid && ['slide', 'seesaw', 'swing', 'playroom', 'swim', 'pets'].includes(cand.key)) baseWeight *= 1.9;
+          if (isKid && ['slide', 'seesaw', 'swing', 'playroom', 'swim', 'pets'].includes(cand.key)) baseWeight *= 2.65;
+          // Weekend: cousins are together all day, so group play is a stronger default.
+          const weekendPlay = isSat || isSun;
+          const cousinIds = ['isaac','hayyan','zaef','ayden','aufa','alina','afiya'];
+          const nearbyCousinPlaying = characters.some(o => o.id !== ch.id && cousinIds.includes(o.id) && o.active && o.visible && !o.leavingHome && ['slide','seesaw','swing','playroom','play_kids','tag'].includes(o.activityKey) && Math.hypot(o.x-ch.x, o.y-ch.y) < 9*TILE);
+          if (weekendPlay && isKid && ['slide','seesaw','swing','playroom','play_kids','pets'].includes(cand.key)) baseWeight *= 2.8;
+          if (weekendPlay && isKid && nearbyCousinPlaying && ['slide','seesaw','swing','playroom','play_kids'].includes(cand.key)) baseWeight *= 1.75;
+          if (weekendPlay && !isKid && ['play_kids','care_kids'].includes(cand.key)) baseWeight *= 1.7;
+          if (['slide', 'seesaw', 'swing'].includes(cand.key)) baseWeight *= 1.55;
+          if (cand.key === 'swim' && hours24 >= 9 && hours24 <= 17) baseWeight *= 1.75;
+          if (cand.key === 'pets' && characters.some(p => p.isPet && p.active && p.visible && Math.hypot(p.x-ch.x,p.y-ch.y) < 10*TILE)) baseWeight *= 2.1;
+          if (cand.key === 'pet_feed') baseWeight *= 2.0;
 
-          // FASA E.3: Dewasa berkumpulan di dapur atau halaman
           if (['cook', 'chat'].includes(cand.key) && ['mama', 'atok', 'mummy_ngah', 'amaya', 'tokma'].includes(ch.id)) {
             baseWeight *= 1.35;
           }
@@ -2617,7 +2675,6 @@
             baseWeight *= 1.35;
           }
 
-          // FASA E.4: Jongkang-jongket perlukan 2 orang (kanak-kanak lain menyertai dengan "Jom main!")
           if (cand.key === 'seesaw') {
             const others = kidsUnder7.filter(k => k.id !== ch.id && Math.hypot(k.x - PLAYGROUND.seesaw.x, k.y - PLAYGROUND.seesaw.y) < 48);
             if (others.length === 0) {
@@ -2633,6 +2690,10 @@
 
           let needUrgency = 1.0;
           if (cand.key === 'eat') needUrgency = 0.5 + (ch.needs.lapar / 45);
+          else if (cand.key === 'pet_feed') {
+            const hungryPet = characters.filter(p => p.isPet && p.active && p.visible).reduce((max, p) => Math.max(max, p.needs?.lapar || 0), 0);
+            needUrgency = 0.35 + hungryPet / 40;
+          }
           else if (cand.key === 'rest') needUrgency = 0.5 + ((100 - ch.needs.tenaga) / 45);
           else if (['slide', 'seesaw', 'swing', 'playroom', 'swim', 'pets', 'tv'].includes(cand.key)) {
             needUrgency = 0.6 + ((100 - ch.needs.hiburan) / 50);
@@ -2644,11 +2705,37 @@
 
           let timeRule = 1.0;
           if (cand.key === 'garden' && (hours24 < 7 || hours24 > 18)) timeRule = 0.2;
-          if (cand.key === 'laundry' && hours24 > 19) timeRule = 0.3;
+          if (cand.key === 'pet_feed' && hours24 > 20) timeRule = 0.2;
           if (work && cand.key === 'tidy' && hours24 >= 7 && hours24 <= 9 && ch.id === 'mama') timeRule = 1.8;
 
-          const smallRandom = Math.random() * 0.65;
-          const score = baseWeight * likeMult * needUrgency * timeRule + smallRandom;
+          // Personality and situational context influence choices, but do not override urgent needs.
+          const traits = prof.traits || {};
+          if (isKid && ['slide', 'seesaw', 'swing', 'playroom', 'swim', 'pets', 'play_kids'].includes(cand.key)) {
+            baseWeight *= 0.85 + (traits.aktif || 0.5) * 0.45 + (traits.ceria || 0.5) * 0.35;
+          }
+          if (['chat', 'story', 'care_kids', 'play_kids'].includes(cand.key)) {
+            baseWeight *= 0.8 + (traits.penyayang || 0.5) * 0.35 + (traits.ceria || 0.5) * 0.25;
+          }
+          if (['rest', 'read_news', 'tv', 'poolside'].includes(cand.key)) {
+            baseWeight *= 1.15 - (traits.aktif || 0.5) * 0.25;
+          }
+
+          // Stronger need urgency helps prevent characters ignoring important needs.
+          if (cand.key === 'eat') needUrgency = Math.max(needUrgency, 0.65 + ch.needs.lapar / 34);
+          if (cand.key === 'rest') needUrgency = Math.max(needUrgency, 0.65 + (100 - ch.needs.tenaga) / 34);
+          if (cand.key === 'hygiene') needUrgency = ch.needs.kebersihan < 35 ? 2.9 : ch.needs.kebersihan < 55 ? 1.6 : 0.25;
+          if (['chat', 'story', 'play_kids'].includes(cand.key)) needUrgency = Math.max(needUrgency, 0.55 + (100 - ch.needs.sosial) / 42);
+          if (['slide', 'seesaw', 'swing', 'playroom', 'swim', 'pets', 'tv'].includes(cand.key)) needUrgency = Math.max(needUrgency, 0.55 + (100 - ch.needs.hiburan) / 42);
+
+          const recentPenalty = getRecentActivityPenalty(ch, cand.key);
+          const targetDistance = Math.hypot(ch.x - cand.c * TILE, ch.y - cand.r * TILE) / (TILE * 18);
+          const distancePenalty = Math.min(0.55, targetDistance * 0.22);
+          const nearbySocial = characters.some(o => o.id !== ch.id && !o.isPet && o.active && o.visible && !o.leavingHome && Math.hypot(o.x - ch.x, o.y - ch.y) < 5 * TILE);
+          let socialContextBonus = 0;
+          if (nearbySocial && ['chat', 'story', 'play_kids', 'care_kids'].includes(cand.key)) socialContextBonus = 0.25;
+          if (!nearbySocial && ch.needs.sosial < 45 && ['chat', 'story', 'play_kids'].includes(cand.key)) socialContextBonus = 0.45;
+          const smallRandom = Math.random() * 0.35;
+          const score = Math.max(0.05, baseWeight * likeMult * needUrgency * timeRule - recentPenalty - distancePenalty + socialContextBonus + smallRandom);
 
           if (score > bestScore) {
             bestScore = score;
@@ -2664,14 +2751,34 @@
               setCharacterActivity(cg, `Menemani ${ch.name} di tepi kolam renang`, 'poolside', 58, 47, false, 'idle', 9);
             }
           }
-          const jitterC = bestCand.c + Math.floor(Math.random() * 3) - 1;
-          const jitterR = bestCand.r + Math.floor(Math.random() * 3) - 1;
-          setCharacterActivity(ch, bestCand.label, bestCand.key, jitterC, jitterR, bestCand.swim, bestCand.mode, 7 + Math.random() * 6);
+          let targetC = bestCand.c;
+          let targetR = bestCand.r;
+          let activityLabel = bestCand.label;
+          if (bestCand.key === 'pet_feed') {
+            const nearestPet = characters.filter(p => p.isPet && p.active && p.visible)
+              .sort((a, b) => Math.hypot(a.x - ch.x, a.y - ch.y) - Math.hypot(b.x - ch.x, b.y - ch.y))[0];
+            if (nearestPet) {
+              targetC = Math.floor(nearestPet.x / TILE) + (nearestPet.id === 'kucing' ? 1 : 2);
+              targetR = Math.floor(nearestPet.y / TILE);
+              activityLabel = `Memberi makan ${nearestPet.name}`;
+            }
+          } else if (bestCand.key === 'pets') {
+            const nearestPet = characters.filter(p => p.isPet && p.active && p.visible)
+              .sort((a, b) => Math.hypot(a.x - ch.x, a.y - ch.y) - Math.hypot(b.x - ch.x, b.y - ch.y))[0];
+            if (nearestPet) {
+              targetC = Math.floor(nearestPet.x / TILE) + 1;
+              targetR = Math.floor(nearestPet.y / TILE);
+              activityLabel = `Bermain & membelai ${nearestPet.name}`;
+            }
+          }
+          const jitterC = targetC + (bestCand.key === 'pet_feed' || bestCand.key === 'pets' ? 0 : Math.floor(Math.random() * 3) - 1);
+          const jitterR = targetR + (bestCand.key === 'pet_feed' || bestCand.key === 'pets' ? 0 : Math.floor(Math.random() * 3) - 1);
+          setCharacterActivity(ch, activityLabel, bestCand.key, jitterC, jitterR, bestCand.swim, bestCand.mode, 7 + Math.random() * 6);
         }
       }
 
       /* =========================================================================
-         9. CHARACTERS ROSTER (FASA D0.1, D0.2, D0.3)
+         9. SENARAI WATAK, SAUDARA-MARA & HAIWAN PELIHARAAN
          ========================================================================= */
       const characters = [
         {
@@ -2710,8 +2817,6 @@
           activity: 'Bermain bersama Tamtam (Kucing) di halaman', thought: '', path: [], timer: 9,
           lockType: null, animPhase: 2.1, swimming: false, unsupervisedSec: 0, wantsToVisit: true
         },
-
-        // Datuk & Nenek
         {
           id: 'atok', name: 'Atok', role: 'Nenek (Ibu Papa)', age: '55 Tahun', group: 'relative',
           emoji: '👵🏻', hijabi: true, shirtColor: '#9333ea', pantsColor: '#3b0764',
@@ -2748,8 +2853,6 @@
           activity: 'Berbual mesra bersama cucu-cucu', thought: '', path: [], timer: 10,
           lockType: null, animPhase: 0.8, swimming: false, unsupervisedSec: 0, wantsToVisit: false
         },
-
-        // 4 Karakter Dewasa Baharu (FASA D0.2)
         {
           id: 'mummy_ngah', name: 'Mummy Ngah', role: 'Ibu Saudara', age: '31 Tahun', group: 'relative',
           emoji: '🧕🏻', hijabi: true, shirtColor: '#db2777', pantsColor: '#1e293b',
@@ -2786,8 +2889,6 @@
           activity: 'Bermain bersama Alina dan Afiya', thought: '', path: [], timer: 8,
           lockType: null, animPhase: 1.8, swimming: false, unsupervisedSec: 0, wantsToVisit: false
         },
-
-        // Sepupu sebelah Papa
         {
           id: 'zaef', name: 'Zaef', role: 'Sepupu (L)', age: '7 Tahun', group: 'relative',
           emoji: '👦🏻', hijabi: false, shirtColor: '#0d9488', pantsColor: '#0f172a',
@@ -2833,8 +2934,6 @@
           activity: 'Melihat haiwan peliharaan dengan penuh rasa ingin tahu', thought: '', path: [], timer: 8,
           lockType: null, animPhase: 2.8, swimming: false, unsupervisedSec: 0, wantsToVisit: false
         },
-
-        // Haiwan peliharaan (id kekal, nama dikemaskini)
         {
           id: 'kucing', name: 'Tamtam (Kucing)', role: 'Haiwan Peliharaan', age: '2 Tahun', group: 'pet',
           emoji: '🐱', hijabi: false, shirtColor: '#1e293b', pantsColor: '#1e293b',
@@ -2865,7 +2964,7 @@
       ];
 
       /* =========================================================================
-         10. FASA D DYNAMIC STATE, THOUGHTS & INITIALIZATION
+         10. KEPERLUAN, MOOD, MEMORI & INISIALISASI WATAK
          ========================================================================= */
       function computeInitialRelScore(idA, idB) {
         if (idA === idB) return 100;
@@ -2904,7 +3003,7 @@
         const entry = `[${stamp}] ${text}`;
         if (ch.memory[0] === entry) return;
         ch.memory.unshift(entry);
-        if (ch.memory.length > 6) ch.memory.length = 6;
+        if (ch.memory.length > 8) ch.memory.length = 8; // sedikit memori tambahan untuk interaksi Phase 4A.2
       }
 
       function getMoodEmoji(mood) {
@@ -2956,6 +3055,26 @@
           return found ? found.name : fallback;
         };
 
+        // Pemikiran tentang haiwan dan anak-anak disahkan berdasarkan lokasi/aktiviti sebenar.
+        if (act === 'pets' || act === 'pet_feed') {
+          const nearbyPet = characters.filter(p => p.isPet && p.active && p.visible && Math.hypot(p.x - ch.x, p.y - ch.y) <= 4 * TILE)
+            .sort((a, b) => Math.hypot(a.x - ch.x, a.y - ch.y) - Math.hypot(b.x - ch.x, b.y - ch.y))[0];
+          if (act === 'pet_feed') return nearbyPet ? `Saya sedang menyediakan makanan untuk ${nearbyPet.name}.` : 'Saya sedang menyediakan makanan di kawasan haiwan.';
+          return nearbyPet ? `Seronok bermain dan membelai ${nearbyPet.name}.` : 'Saya sedang mencari haiwan peliharaan untuk bermain dan membelai.';
+        }
+        // Pemikiran tentang pemerhatian anak hanya menyebut anak yang benar-benar dekat dan sedang melakukan aktiviti tersebut.
+        if (act === 'poolside' || act === 'care_kids') {
+          const nearbyChildren = characters.filter(k => k.active && k.visible && !k.isPet && k.id !== ch.id &&
+            (PROFILES[k.id]?.ageYears || 99) < 13 && Math.hypot(k.x - ch.x, k.y - ch.y) <= 5 * TILE);
+          const swimmingChild = nearbyChildren.find(k => k.swimming || k.activityKey === 'swim');
+          if (swimmingChild && (act === 'poolside' || act === 'care_kids')) {
+            return `${swimmingChild.name} sedang bermain air; saya memerhatikannya dari dekat.`;
+          }
+          const playingChild = nearbyChildren.find(k => ['slide','swing','seesaw','playroom','tag','play_kids'].includes(k.activityKey));
+          if (playingChild && act === 'care_kids') return `${playingChild.name} sedang bermain; saya berada berdekatan untuk menemani.`;
+          if (act === 'poolside') return 'Berehat di tepi kolam sambil menikmati suasana halaman.';
+          return 'Saya sedang mencari tempat yang sesuai untuk menemani anak-anak bermain.';
+        }
         if (ch.id === 'zaef' && present.some(p => p.id === 'mummy_ngah')) {
           const mummy = characters.find(p => p.id === 'mummy_ngah');
           if (mummy && mummy.activityKey === 'cook') {
@@ -2992,7 +3111,7 @@
               `Splash! Air kolam memang menyegarkan!`
             ],
             poolside: [
-              `Duduk di tepi kolam bersama ${pickRelName(['mama', 'amaya', 'mummy_ngah', 'atok'], 'orang dewasa')}.`,
+              `Duduk santai di tepi kolam sambil menikmati suasana.`,
               `Main di tepi kolam pun dah seronok!`,
               `Tengok air kolam berkilau dari tepi.`
             ],
@@ -3000,6 +3119,11 @@
               `Banyaknya mainan best dalam Bilik Mainan ni!`,
               `Jom main blok dan permainan kreatif dengan ${pickRelName(['alina', 'isaac', 'hayyan', 'ayden'], 'sepupu')}!`,
               `Seronok main dalam Bilik Mainan!`
+            ],
+            pet_feed: [
+              `Saya sedang menyediakan makanan untuk haiwan peliharaan.`,
+              `Pastikan haiwan-haiwan cukup makan dan minum.`,
+              `Haiwan peliharaan pun sebahagian daripada keluarga kita.`
             ],
             pets: [
               `Comelnya Tamtam (Kucing) bila dibelai!`,
@@ -3044,8 +3168,8 @@
               `Rumah bersih buat suasana lebih tenang.`
             ],
             laundry: [
-              `Uruskan cucian dan lipatan kain di Bilik Dobi.`,
-              `Kain baju bersih dan tersusun rapi.`,
+              `Pastikan bilik mandi bersih dan tuala tersusun.`,
+              `Tuala bersih sudah tersedia untuk keluarga.`,
               `Selesaikan kerja dobi awal supaya lapang nanti.`
             ],
             tv: [
@@ -3253,7 +3377,7 @@
         const nearBath = ch.path.some(pt => {
           const tc = Math.floor(pt.x / TILE);
           const tr = Math.floor(pt.y / TILE);
-          return tc >= 32 && tc <= 40 && tr >= 27 && tr <= 38;
+          return tc >= 66 && tc <= 71 && tr >= 27 && tr <= 38;
         });
         if (nearBath && SINGLE_LOCKS.bathroom.occupant && SINGLE_LOCKS.bathroom.occupant !== ch.id) {
           if (!SINGLE_LOCKS.bathroom.queue.includes(ch.id)) SINGLE_LOCKS.bathroom.queue.push(ch.id);
@@ -3265,23 +3389,26 @@
           return;
         }
 
-        if (curC >= 32 && curC <= 40 && curR >= 27 && curR <= 38 && !SINGLE_LOCKS.bathroom.occupant) {
+        if (curC >= 66 && curC <= 71 && curR >= 27 && curR <= 38 && !SINGLE_LOCKS.bathroom.occupant) {
           SINGLE_LOCKS.bathroom.occupant = ch.id;
           ch.lockType = 'bathroom';
-        } else if (!(curC >= 32 && curC <= 40 && curR >= 27 && curR <= 38) && SINGLE_LOCKS.bathroom.occupant === ch.id) {
+        } else if (!(curC >= 66 && curC <= 71 && curR >= 27 && curR <= 38) && SINGLE_LOCKS.bathroom.occupant === ch.id) {
           SINGLE_LOCKS.bathroom.occupant = null;
           ch.lockType = null;
           if (SINGLE_LOCKS.bathroom.queue.length > 0) {
             const nextId = SINGLE_LOCKS.bathroom.queue.shift();
             const nextCh = characters.find(x => x.id === nextId);
             if (nextCh && nextCh.active && nextCh.visible) {
-              setCharacterActivity(nextCh, 'Masuk ke Bilik Mandi', 'hygiene', 36, 31, false, 'idle', 7);
+              setCharacterActivity(nextCh, 'Masuk ke Bilik Mandi', 'hygiene', 68, 31, false, 'idle', 7);
             }
           }
         }
       }
 
       function setCharacterActivity(ch, label, activityKey, goalC, goalR, swimGoal = false, mode = 'walk', duration = 8) {
+        // Semasa rutin keluarga (mandi pagi / makan bersama) sistem lain tidak boleh mengalihkan watak.
+        // Pengecualian: rutin itu sendiri, giliran bilik mandi, pelawat yang pulang & Papa bertolak kerja.
+        if (ch.routineLock && !ch.routineBypass && !ch.leavingHome && ch.carPhase !== 'boarding_out' && activityKey !== 'hygiene') return;
         if (FAMILY.bayi.includes(ch.id) && swimGoal) {
           swimGoal = false;
           goalC = 59;
@@ -3294,9 +3421,22 @@
         const startC = Math.max(1, Math.min(COLS - 2, Math.floor(ch.x / TILE)));
         const startR = Math.max(1, Math.min(ROWS - 2, Math.floor(ch.y / TILE)));
         const prevAct = ch.activity;
-        ch.activity = label;
+        const prevActivityKey = ch.activityKey;
+        const sleepRequested = activityKey === 'sleep' || mode === 'sleep';
+        if (prevActivityKey && prevActivityKey !== activityKey && !ch.isPet) {
+          ch.activityHistory = Array.isArray(ch.activityHistory) ? ch.activityHistory : [];
+          ch.activityHistory.push({ key: prevActivityKey, day: timeState.dayNumber, minute: Math.floor(timeState.virtualMinutes % 1440), label: prevAct || prevActivityKey });
+          // Simpan memori aktiviti secara ringan; hanya sejarah pendek diperlukan untuk anti-pengulangan.
+          if (ch.activityHistory.length > 12) ch.activityHistory.splice(0, ch.activityHistory.length - 12);
+        }
+        ch.chosenActivityAt = { day: timeState.dayNumber, minute: Math.floor(timeState.virtualMinutes % 1440) };
+        ch.chosenActivityReason = activityKey;
         ch.activityKey = activityKey;
-        ch.actionMode = mode;
+        ch.activity = label;
+        ch.actionMode = sleepRequested ? 'walk' : mode;
+        ch.pendingSleep = sleepRequested;
+        ch.sleepRetry = 0;
+        ch.sleepTarget = sleepRequested ? { x: (goalC + 0.5) * TILE, y: (goalR + 0.5) * TILE } : null;
         ch.timer = duration;
 
         if (swimGoal) {
@@ -3325,7 +3465,7 @@
 
       function updateNeedsAndMood(ch, dt, effectiveTimeScale) {
         if (!ch.active || !ch.visible) return;
-        const virtualHours = (dt * effectiveTimeScale) / 60;
+        const virtualHours = (dt * effectiveTimeScale) / 3600; // dt dalam saat sebenar, scale dalam minit virtual / minit sebenar
         const prof = PROFILES[ch.id] || { ageYears: 25 };
         const isKid = prof.ageYears < 13;
 
@@ -3380,7 +3520,6 @@
         }
       }
 
-      // Kelajuan jalan karakter tidak berubah akibat NIGHT_SPEED_MULT
       function updateCharacter(ch, dt, effectiveTimeScale) {
         if (!ch.active || !ch.visible) return;
 
@@ -3394,29 +3533,47 @@
         }
 
         updateNeedsAndMood(ch, dt, effectiveTimeScale);
+        ch.thoughtRefreshTimer = (ch.thoughtRefreshTimer || 0) + dt;
+        if (ch.thoughtRefreshTimer >= 10) {
+          ch.thoughtRefreshTimer = 0;
+          ch.thought = generateThought(ch);
+        }
 
         const prof = PROFILES[ch.id] || { moveSpeedMult: 1.0 };
         const speedMult = prof.moveSpeedMult || 1.0;
 
-        ch.animPhase += dt * (ch.path.length > 0 ? 9 * speedMult : 3.2);
-
         if (ch.path && ch.path.length > 0) {
-          const target = ch.path[0];
-          const dx = target.x - ch.x;
-          const dy = target.y - ch.y;
-          const dist = Math.hypot(dx, dy);
           const baseSpeed = ch.swimming ? ch.speed * 0.72 : ch.speed;
           const stepSpeed = baseSpeed * speedMult;
-
-          if (dist <= stepSpeed * dt + 1.5) {
-            ch.x = target.x;
-            ch.y = target.y;
-            ch.path.shift();
-          } else {
-            ch.x += (dx / dist) * stepSpeed * dt;
-            ch.y += (dy / dist) * stepSpeed * dt;
-            if (Math.abs(dx) > 1) ch.facing = dx >= 0 ? 1 : -1;
+          // Gerakan berterusan: baki jarak dibawa ke waypoint seterusnya (tiada 'snap' / lompatan kecil
+          // di setiap petak), dan fasa animasi mengikut jarak sebenar yang dilalui.
+          let remaining = stepSpeed * dt;
+          const startX = ch.x, startY = ch.y;
+          let loopGuard = 0;
+          while (remaining > 0 && ch.path.length > 0 && loopGuard++ < 6) {
+            const target = ch.path[0];
+            const dx = target.x - ch.x;
+            const dy = target.y - ch.y;
+            const dist = Math.hypot(dx, dy);
+            if (Math.abs(dx) > 3) ch.facing = dx >= 0 ? 1 : -1; // hysteresis: elak pusing kiri-kanan
+            if (dist <= remaining) {
+              ch.x = target.x;
+              ch.y = target.y;
+              remaining -= dist;
+              ch.path.shift();
+            } else {
+              const nextX = ch.x + (dx / dist) * remaining;
+              const nextY = ch.y + (dy / dist) * remaining;
+              if (!isPointBlockedBySolidObject(nextX, nextY, ch.id)) {
+                ch.x = nextX;
+                ch.y = nextY;
+              } else {
+                ch.path.shift();
+              }
+              remaining = 0;
+            }
           }
+          ch.animPhase += Math.hypot(ch.x - startX, ch.y - startY) * 0.131;
 
           const c = Math.max(0, Math.min(COLS - 1, Math.floor(ch.x / TILE)));
           const r = Math.max(0, Math.min(ROWS - 1, Math.floor(ch.y / TILE)));
@@ -3426,9 +3583,38 @@
           const r = Math.max(0, Math.min(ROWS - 1, Math.floor(ch.y / TILE)));
           ch.swimming = grid[idx(c, r)] === CELL_POOL;
 
-          ch.timer -= dt;
-          if (ch.timer <= 0) {
-            chooseNextActivityForCharacter(ch);
+          if (ch.pendingSleep) {
+            const target = ch.sleepTarget;
+            const distToBed = target ? Math.hypot(ch.x - target.x, ch.y - target.y) : 0;
+            // Katil ialah objek pepejal: A* berhenti di petak terdekat yang boleh dicapai, jadi terima
+            // kedudukan dalam lingkungan ~3.5 petak selepas beberapa percubaan tanpa laluan lebih dekat.
+            ch.sleepRetry = (ch.sleepRetry || 0) + 1;
+            const arrived = target && (distToBed <= TILE * 0.8 || (distToBed <= TILE * 3.5 && ch.sleepRetry >= 3));
+            if (arrived) {
+              ch.pendingSleep = false;
+              ch.actionMode = 'sleep';
+              ch.timer = Math.max(ch.timer, 10);
+              ch.thought = generateThought(ch);
+              if (!ch.isPet) addMemory(ch, 'Sampai ke katil dan mula tidur.');
+            } else if (target) {
+              // Failed/empty path must not cause sleep in place. Retry toward the bed.
+              const startC = Math.max(1, Math.min(COLS - 2, Math.floor(ch.x / TILE)));
+              const startR = Math.max(1, Math.min(ROWS - 2, Math.floor(ch.y / TILE)));
+              const goalC = Math.floor(target.x / TILE), goalR = Math.floor(target.y / TILE);
+              const retry = computeAStarPath(startC, startR, goalC, goalR, false, ch.id);
+              if (retry.length) ch.path = retry;
+              else {
+                ch.activity = 'Mencari laluan ke katil';
+                ch.actionMode = 'walk';
+                ch.timer = Math.max(ch.timer, 2);
+              }
+            } else {
+              ch.pendingSleep = false;
+              ch.actionMode = 'idle';
+            }
+          } else {
+            ch.timer -= dt;
+            if (ch.timer <= 0) chooseNextActivityForCharacter(ch);
           }
         }
       }
@@ -3437,7 +3623,6 @@
         const ent = characters.find(c => c.id === id);
         if (!ent) return;
 
-        // FASA F.3: Antara 22:00 dan 06:00, toggle manual hanya menukar wantsToVisit
         if (isNightAcceleratedActive()) {
           ent.wantsToVisit = forceState !== null ? forceState : !ent.wantsToVisit;
           setTicker(`Sudah lewat malam, ${ent.name} datang esok pagi.`);
@@ -3473,28 +3658,332 @@
         }
       }
 
-      // FASA F.8: Butang Kumpul hanya melibatkan karakter yang berada di rumah dan berjaga
+
+      /* =========================================================================
+         RUTIN KELUARGA: (1) bangun tidur -> mandi & memberus gigi, (2) makan bersama
+         ========================================================================= */
+      const ROUTINE_ROOMS = {
+        toilet:   { rect: { c1: 60, r1: 27, c2: 64, r2: 38 }, lock: SINGLE_LOCKS.toilet,   enter: { c: 62, r: 32 }, name: 'Tandas' },
+        bathroom: { rect: { c1: 66, r1: 27, c2: 71, r2: 38 }, lock: SINGLE_LOCKS.bathroom, enter: { c: 68, r: 31 }, name: 'Bilik Mandi' }
+      };
+      // Urutan selepas bangun tidur. Ubah/tambah langkah di sini (dur = saat simulasi; 1 saat ~ 8 minit virtual).
+      const WAKE_ROUTINE_STEPS = [
+        { key: 'teeth',  room: 'toilet',   label: 'Ke Tandas, memberus gigi selepas bangun', c: 62, r: 32, dur: 1.8 },
+        { key: 'shower', room: 'bathroom', label: 'Mandi pagi di Bilik Mandi',               c: 68, r: 31, dur: 2.8 }
+      ];
+      // start/hardEnd dalam jam (24j). hardEndWork = tamat paksa pada hari bekerja (Papa bertolak 9 AM).
+      const MEAL_EVENTS = [
+        { key: 'breakfast', label: 'sarapan',          start: 7.0,  hardEnd: 12.0, hardEndWork: 12.0,  eatSec: 6 },
+        { key: 'lunch',     label: 'makan tengah hari', start: 12.5, hardEnd: 15.0, hardEndWork: 15.0, eatSec: 7 },
+        { key: 'dinner',    label: 'makan malam',       start: 18.5, hardEnd: 20.9, hardEndWork: 20.9, eatSec: 8 }
+      ];
+      const MEAL_SEATS = [
+        { c: 45, r: 16 }, { c: 43, r: 17 }, { c: 45, r: 18 }, { c: 47, r: 18 },
+        { c: 44, r: 16 }, { c: 47, r: 16 }, { c: 42, r: 17 }, { c: 48, r: 17 },
+        { c: 43, r: 16 }, { c: 46, r: 16 }, { c: 44, r: 18 }, { c: 46, r: 18 },
+        { c: 42, r: 18 }, { c: 48, r: 18 }, { c: 49, r: 17 }, { c: 41, r: 17 }
+      ];
+      const GATHER_MAX_WAIT = 8;    // saat simulasi menunggu ahli yang masih mandi
+      const ROUTINE_SAFETY_MAX = 90; // saat simulasi; pelepas keselamatan jika watak tersangkut
+      const mealState = { phase: 'idle', event: null, key: '', t: 0, members: {}, seatIdx: 0, done: {} };
+
+      function routineGo(ch, label, key, c, r, mode, dur) {
+        ch.routineBypass = true;
+        try { setCharacterActivity(ch, label, key, c, r, false, mode, dur); }
+        finally { ch.routineBypass = false; }
+      }
+
+      function isInsideRect(ch, rc) {
+        const c = Math.floor(ch.x / TILE), r = Math.floor(ch.y / TILE);
+        return c >= rc.c1 && c <= rc.c2 && r >= rc.r1 && r <= rc.r2;
+      }
+
+      function clearRoutine(ch, restart) {
+        ch.routine = null;
+        ch.routineLock = false;
+        ch.routineLockT = 0;
+        if (mealState.members[ch.id]) delete mealState.members[ch.id];
+        if (restart && ch.active && ch.visible && !ch.leavingHome) chooseNextActivityForCharacter(ch);
+      }
+
+      /* ---------- (1) Bangun tidur ---------- */
+      function startWakeRoutine(ch) {
+        ch.routineLock = true;
+        ch.routineLockT = 0;
+        ch.pendingSleep = false;
+        ch.sleepTarget = null;
+        ch.routine = { type: 'wake', step: 0, phase: 'go', t: 0, retry: 0 };
+        spawnBubble(ch, 'Bangun... ke tandas, gosok gigi & mandi dulu.');
+        addMemory(ch, 'Bangun tidur dan terus ke Tandas untuk memberus gigi, kemudian mandi di Bilik Mandi.');
+        beginWakeStep(ch);
+      }
+
+      function beginWakeStep(ch) {
+        const step = WAKE_ROUTINE_STEPS[ch.routine.step];
+        ch.routine.phase = 'go';
+        ch.routine.retry = 1.5;
+        routineGo(ch, step.label, 'hygiene', step.c, step.r, 'idle', step.dur + 6);
+      }
+
+      function updateWakeRoutine(ch, dt) {
+        const rt = ch.routine;
+        const step = WAKE_ROUTINE_STEPS[rt.step];
+        const room = ROUTINE_ROOMS[step.room];
+        rt.retry = Math.max(0, rt.retry - dt);
+        if (rt.phase === 'go') {
+          const L = room.lock;
+          // Jika bilik sedang digunakan orang lain, beratur di luar (bukan masuk bersama-sama).
+          if (L.occupant && L.occupant !== ch.id && !isInsideRect(ch, room.rect) && !L.queue.includes(ch.id) &&
+              ch.path.some(pt => isInsideRect({ x: pt.x, y: pt.y }, room.rect))) {
+            L.queue.push(ch.id);
+            const spot = L.waitSpots[(L.queue.length - 1) % L.waitSpots.length];
+            ch.path = computeAStarPath(Math.floor(ch.x / TILE), Math.floor(ch.y / TILE), spot.c, spot.r, false, ch.id);
+            ch.activity = `Menunggu giliran di luar ${room.name}`;
+          }
+          if (ch.path.length === 0) {
+            if (isInsideRect(ch, room.rect)) {
+              rt.phase = 'do';
+              rt.t = step.dur;
+              ch.activity = step.label;
+              ch.activityKey = 'hygiene';
+              ch.actionMode = 'idle';
+              ch.timer = step.dur + 1;
+            } else if (!L.queue.includes(ch.id) && rt.retry <= 0) {
+              rt.retry = 1.5;
+              routineGo(ch, step.label, 'hygiene', step.c, step.r, 'idle', step.dur + 6);
+            }
+          }
+        } else {
+          rt.t -= dt;
+          if (rt.t <= 0) {
+            rt.step++;
+            if (rt.step >= WAKE_ROUTINE_STEPS.length) finishWakeRoutine(ch);
+            else beginWakeStep(ch);
+          }
+        }
+      }
+
+      function finishWakeRoutine(ch) {
+        if (ch.needs) ch.needs.kebersihan = 100;
+        addMemory(ch, 'Selesai mandi dan memberus gigi, segar untuk memulakan hari.');
+        ch.routine = null;
+        ch.routineLock = false;
+        ch.routineLockT = 0;
+        const m = mealState.members[ch.id];
+        if (mealState.phase !== 'idle' && m) sendToSeat(ch, m);
+        else chooseNextActivityForCharacter(ch);
+      }
+
+      /* ---------- (2) Makan bersama ---------- */
+      function isEligibleForMeal(ch) {
+        if (!ch.active || !ch.visible || ch.isPet || ch.leavingHome) return false;
+        if (ch.actionMode === 'sleep' || ch.pendingSleep) return false;
+        if (ch.id === 'papa' && ch.carPhase && ch.carPhase !== 'at_home') return false;
+        return true;
+      }
+
+      function startMeal(ev, key) {
+        const ms = mealState;
+        ms.phase = 'gather';
+        ms.event = ev;
+        ms.key = key;
+        ms.done[key] = true;
+        ms.served = {};
+        ms.t = 0;
+        ms.members = {};
+        ms.seatIdx = 0;
+        characters.forEach(ch => { if (isEligibleForMeal(ch)) addMealMember(ch); });
+        const mama = characters.find(c => c.id === 'mama' && ms.members['mama']);
+        if (mama) spawnBubble(mama, `Jom ${ev.label} sama-sama!`);
+        setTicker(`🍽️ Masa ${ev.label}: semua yang berada di rumah berkumpul di meja makan.`);
+      }
+
+      function addMealMember(ch) {
+        const ms = mealState;
+        if (ms.members[ch.id] || (ms.served && ms.served[ch.id])) return;
+        const seat = MEAL_SEATS[ms.seatIdx++ % MEAL_SEATS.length];
+        const m = { seat, state: 'going', eatLeft: 0, tries: 0, retry: 0 };
+        ms.members[ch.id] = m;
+        if (ch.routine && ch.routine.type === 'wake') { m.state = 'wake'; return; } // sertai selepas siap mandi
+        sendToSeat(ch, m);
+      }
+
+      function sendToSeat(ch, m) {
+        ch.routine = { type: 'meal' };
+        ch.routineLock = true;
+        ch.routineLockT = 0;
+        m.state = 'going';
+        m.retry = 1.5;
+        routineGo(ch, `Ke meja makan untuk ${mealState.event.label}`, 'eat', m.seat.c, m.seat.r, 'walk', 30);
+      }
+
+      function releaseMealMember(ch) {
+        if (ch.needs) ch.needs.lapar = Math.min(ch.needs.lapar, 8);
+        if (mealState.served) mealState.served[ch.id] = true;
+        addMemory(ch, `Selesai ${mealState.event.label} bersama keluarga.`);
+        clearRoutine(ch, true);
+      }
+
+      function updateMeals(dt, hourFloat) {
+        const ms = mealState;
+        const day = timeState.dayNumber;
+        if (ms.phase === 'idle') {
+          for (const ev of MEAL_EVENTS) {
+            const key = day + ':' + ev.key;
+            const hardEnd = isWorkday() ? ev.hardEndWork : ev.hardEnd;
+            // Tunggu semua siap mandi/gosok gigi dahulu (maks. 1.5 jam selepas waktu mula)
+            const anyWake = characters.some(c => c.routine && c.routine.type === 'wake');
+            if (!ms.done[key] && hourFloat >= ev.start && hourFloat < hardEnd && (!anyWake || hourFloat >= ev.start + 1.5)) { startMeal(ev, key); break; }
+          }
+          return;
+        }
+
+        const ev = ms.event;
+        const hardEnd = isWorkday() ? ev.hardEndWork : ev.hardEnd;
+        if (hourFloat >= hardEnd || hourFloat < ev.start - 1) {
+          // masa tamat paksa / masa dialihkan: lepaskan semua
+          Object.keys(ms.members).forEach(id => {
+            const ch = characters.find(c => c.id === id);
+            if (ch && ch.routine && ch.routine.type === 'meal') releaseMealMember(ch);
+            else if (ch) delete ms.members[id];
+          });
+          ms.members = {};
+          ms.phase = 'idle';
+          return;
+        }
+
+        ms.t += dt;
+        // sertakan ahli yang baru tiba / baru bangun sebelum waktu 'late join' tamat
+        characters.forEach(ch => { if (isEligibleForMeal(ch) && !ms.members[ch.id]) addMealMember(ch); });
+
+        const ids = Object.keys(ms.members);
+        ids.forEach(id => {
+          const ch = characters.find(c => c.id === id);
+          const m = ms.members[id];
+          if (!ch || !isEligibleForMealOrRoutine(ch)) { if (ch && ch.routine && ch.routine.type === 'meal') clearRoutine(ch, true); delete ms.members[id]; return; }
+          if (m.state === 'wake') return;
+          if (m.state === 'going') {
+            m.retry = Math.max(0, m.retry - dt);
+            if (ch.path.length === 0) {
+              const dTile = Math.hypot(ch.x - (m.seat.c + 0.5) * TILE, ch.y - (m.seat.r + 0.5) * TILE) / TILE;
+              if (dTile <= 1.3 || m.tries >= 3) {
+                m.state = 'seated';
+                ch.actionMode = 'idle';
+                ch.activity = `Duduk menunggu semua orang untuk ${ev.label}`;
+                ch.activityKey = 'eat';
+                ch.facing = (Math.floor(ch.x / TILE) <= 45) ? 1 : -1;
+              } else if (m.retry <= 0) {
+                m.tries++;
+                m.retry = 1.5;
+                routineGo(ch, `Ke meja makan untuk ${ev.label}`, 'eat', m.seat.c, m.seat.r, 'walk', 30);
+              }
+            }
+          }
+          if (m.state === 'seated' && ms.phase === 'eat') beginEating(ch, m);
+          if (m.state === 'eating') {
+            ch.actionMode = 'eat';   // sistem sembang boleh tukar label, tetapi watak tetap makan
+            ch.activityKey = 'eat';
+            m.eatLeft -= dt;
+            if (m.eatLeft <= 0) { m.state = 'done'; releaseMealMember(ch); }
+          }
+        });
+
+        if (ms.phase === 'gather') {
+          const waiting = Object.values(ms.members);
+          const allSeated = waiting.length > 0 && waiting.every(m => m.state === 'seated');
+          if (waiting.length === 0) { ms.phase = 'idle'; return; }
+          if (allSeated || ms.t >= GATHER_MAX_WAIT) {
+            ms.phase = 'eat';
+            setTicker(`🍽️ Semua berkumpul — ${ev.label} bersama keluarga bermula.`);
+          }
+        } else if (Object.keys(ms.members).length === 0) {
+          ms.phase = 'idle';
+        }
+      }
+
+      function isEligibleForMealOrRoutine(ch) {
+        return ch.active && ch.visible && !ch.leavingHome && !(ch.id === 'papa' && ch.carPhase && ch.carPhase !== 'at_home');
+      }
+
+      function beginEating(ch, m) {
+        m.state = 'eating';
+        m.eatLeft = mealState.event.eatSec;
+        ch.actionMode = 'eat';
+        ch.activityKey = 'eat';
+        ch.activity = `Makan ${mealState.event.label} bersama keluarga`;
+        ch.timer = m.eatLeft + 1;
+        ch.thought = generateThought(ch);
+      }
+
+      // Kunci Bilik Mandi asal hanya dikemas kini semasa setCharacterActivity() dipanggil, jadi 'occupant'
+      // boleh tersangkut lama selepas orang itu keluar dan giliran tidak bergerak. Kemas kini setiap frame.
+      function maintainRoomLocks() {
+        Object.values(ROUTINE_ROOMS).forEach(room => {
+          const L = room.lock;
+          if (L.occupant) {
+            const occ = characters.find(c => c.id === L.occupant);
+            if (!occ || !occ.active || !occ.visible || !isInsideRect(occ, room.rect)) {
+              if (occ) occ.lockType = null;
+              L.occupant = null;
+            }
+          }
+          L.queue = L.queue.filter(id => { const c = characters.find(x => x.id === id); return c && c.active && c.visible && !isInsideRect(c, room.rect); });
+          if (!L.occupant) {
+            const inside = characters.find(c => !c.isPet && c.active && c.visible && isInsideRect(c, room.rect));
+            if (inside) { L.occupant = inside.id; inside.lockType = 'hygiene-room'; }
+          }
+          if (!L.occupant && L.queue.length > 0) {
+            const nextCh = characters.find(c => c.id === L.queue[0]);
+            L.queue.shift();
+            if (nextCh) {
+              const st = (nextCh.routine && nextCh.routine.type === 'wake') ? WAKE_ROUTINE_STEPS[nextCh.routine.step] : null;
+              routineGo(nextCh, st ? st.label : `Masuk ke ${room.name}`, 'hygiene', st ? st.c : room.enter.c, st ? st.r : room.enter.r, 'idle', 7);
+            }
+          }
+        });
+      }
+
+      function updateFamilyRoutines(dt) {
+        maintainRoomLocks();
+        const { hourFloat } = getCurrentClock();
+        characters.forEach(ch => {
+          if (ch.isPet) return;
+          const asleep = ch.actionMode === 'sleep';
+          if (ch._wasAsleep && !asleep && !ch.pendingSleep && !ch.routine && ch.active && ch.visible && !ch.leavingHome &&
+              hourFloat >= 4 && hourFloat < 11) {
+            startWakeRoutine(ch);
+          }
+          ch._wasAsleep = asleep;
+          if (!ch.routine) return;
+          if (!isEligibleForMealOrRoutine(ch)) { clearRoutine(ch, false); return; }
+          ch.routineLockT = (ch.routineLockT || 0) + dt;
+          if (ch.routineLockT > ROUTINE_SAFETY_MAX) { clearRoutine(ch, true); return; }
+          if (ch.routine.type === 'wake') updateWakeRoutine(ch, dt);
+        });
+        updateMeals(dt, hourFloat);
+      }
+
       function gatherFamilyActivity() {
-        const tableSpots = [
-          { c: 45, r: 16 }, { c: 43, r: 17 }, { c: 45, r: 18 }, { c: 47, r: 18 },
-          { c: 44, r: 16 }, { c: 47, r: 16 }, { c: 42, r: 17 }, { c: 48, r: 17 },
-          { c: 43, r: 16 }, { c: 46, r: 16 }, { c: 44, r: 18 }, { c: 46, r: 18 },
-          { c: 42, r: 18 }, { c: 48, r: 18 }, { c: 49, r: 17 }, { c: 41, r: 17 }
+        // Gather everyone at the center of the WFH office, not the dining table.
+        const officeSpots = [
+          { c: 19, r: 35 }, { c: 18, r: 35 }, { c: 20, r: 35 }, { c: 19, r: 34 },
+          { c: 18, r: 34 }, { c: 20, r: 34 }, { c: 19, r: 36 }, { c: 18, r: 36 },
+          { c: 20, r: 36 }, { c: 17, r: 35 }, { c: 21, r: 35 }, { c: 17, r: 34 },
+          { c: 21, r: 34 }, { c: 17, r: 36 }, { c: 21, r: 36 }
         ];
         let idxSpot = 0;
         characters.forEach(ch => {
           if (!ch.active || !ch.visible || ch.leavingHome || ch.actionMode === 'sleep') return;
           if (ch.id === 'papa' && isPapaWorkTime()) return;
           if (ch.isPet) {
-            setCharacterActivity(ch, 'Menunggu berhampiran meja makan keluarga', 'pets', 49, 19, false, 'idle', 10);
+            setCharacterActivity(ch, 'Berkumpul berhampiran keluarga di Pejabat WFH', 'pets', 21, 37, false, 'idle', 10);
             return;
           }
-          const sp = tableSpots[idxSpot % tableSpots.length];
-          idxSpot++;
-          setCharacterActivity(ch, 'Berkumpul bersama keluarga di Ruang Makan', 'eat', sp.c, sp.r, false, 'eat', 12);
-          addMemory(ch, 'Berkumpul bersama keluarga yang berjaga.');
+          const sp = officeSpots[idxSpot++ % officeSpots.length];
+          setCharacterActivity(ch, 'Berkumpul bersama keluarga di Pejabat WFH', 'chat', sp.c, sp.r, false, 'idle', 12);
+          addMemory(ch, 'Berkumpul bersama keluarga di Pejabat WFH.');
         });
-        setTicker('👨‍👩‍👦‍👦 Kumpul: Semua yang berada di rumah & berjaga berkumpul di Ruang Makan!');
+        setTicker('👨‍👩‍👦‍👦 Kumpul: keluarga berkumpul di tengah Pejabat WFH!');
       }
 
       function updateGateAndCar(dt) {
@@ -3508,7 +3997,7 @@
         const papaShouldWork = isPapaWorkTime();
         const papa = characters.find(ch => ch.id === 'papa');
 
-        if (papaShouldWork && familyCar.state === 'parked' && papa && papa.carPhase === 'at_home') {
+        if (papaShouldWork && familyCar.state === 'parked' && papa && papa.carPhase === 'at_home' && !papa.routineLock) {
           const papaWalking = papa.path && papa.path.length > 0 && papa.actionMode === 'walk';
           if (!papaWalking) {
             papa.carPhase = 'boarding_out';
@@ -3571,7 +4060,7 @@
       }
 
       /* =========================================================================
-         11. CAMERA, PAN, ZOOM & TAP-TO-INSPECT INTERACTION
+         11. KAMERA, PAN, ZUM & KETIKAN INSPEKTOR / DEKORASI
          ========================================================================= */
       const canvas = document.getElementById('worldCanvas');
       const ctx = canvas.getContext('2d');
@@ -3587,7 +4076,6 @@
       function computeFitZoom() {
         const vw = canvas.clientWidth || window.innerWidth;
         const vh = canvas.clientHeight || window.innerHeight;
-        // Rizab ruang HUD atas & bawah supaya peta tidak tertutup sepenuhnya pada 9:16 dan 16:9
         const topReserve = vh < 480 ? 52 : 64;
         const bottomReserve = vw < 600 && vh > vw ? 116 : 64;
         const availW = Math.max(180, vw - 16);
@@ -3604,7 +4092,6 @@
       }
 
       function resizeCanvas() {
-        // Measure the actual canvas CSS box to keep rendering and pointer mapping aligned.
         const w = Math.max(1, canvas.clientWidth || window.innerWidth);
         const h = Math.max(1, canvas.clientHeight || window.innerHeight);
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -3718,7 +4205,6 @@
           const vw = canvas.clientWidth || window.innerWidth;
           const vh = canvas.clientHeight || window.innerHeight;
           camera.zoom = Math.max(camera.minZoom, Math.min(camera.maxZoom, pinchState.startZoom * (dist / pinchState.startDistance)));
-          // Keep the world point under the pinch midpoint stationary while zooming.
           camera.x = pinchState.anchorWorld.x - (mid.x - vw * 0.5) / camera.zoom;
           camera.y = pinchState.anchorWorld.y - (mid.y - vh * 0.5) / camera.zoom;
           clampCamera();
@@ -3750,11 +4236,6 @@
             const d = Math.hypot(worldPt.x - ch.x, worldPt.y - (ch.y - 6));
             if (d < bestDist) { bestDist = d; hit = ch; }
           }
-          if (decorMode) {
-            const allowed = worldPt.x > 4*TILE && worldPt.x < 82*TILE && worldPt.y > 5*TILE && worldPt.y < 57*TILE;
-            if (allowed) { placedDecorations.push({ type: selectedDecorType, x: Math.round(worldPt.x/TILE)*TILE + TILE/2, y: Math.round(worldPt.y/TILE)*TILE + TILE/2 }); try { localStorage.setItem('rumah-kita-decor-v1', JSON.stringify(placedDecorations)); } catch (_) {} }
-            return;
-          }
           if (hit) {
             selectedEntityId = hit.id;
             setTicker(`${getMoodEmoji(hit.mood)} ${hit.name} (${hit.age}) • ${getCurrentRoomAt(hit.x, hit.y)}: ${hit.activity} — "${hit.thought}"`);
@@ -3769,7 +4250,6 @@
         if (pinchState) {
           pinchState = null;
           resetPointerState();
-          // If one finger remains, continue with a fresh pan baseline.
           if (activePointers.size === 1) {
             const [id, p] = [...activePointers.entries()][0];
             pointerState.down = true;
@@ -3799,7 +4279,7 @@
       }, { passive: false });
 
       /* =========================================================================
-         12. 2D PIXEL RENDERER + CACHED LAMP GLOW + BBQ + BUBBLES (FASA E.6, F.6, F.7, G.6)
+         12. RENDERER 2D PIKSEL, CAHAYA LAMPU MALAM, BBQ & GELEMBUNG UCAPAN
          ========================================================================= */
       const glowCache = new Map();
       function getCachedGlowCanvas(radius, rgbaColor) {
@@ -3827,31 +4307,6 @@
         });
       }
 
-      // User-placeable decorative furniture (visual only, saved locally on this device).
-      let decorMode = false;
-      let selectedDecorType = 'plant';
-      let placedDecorations = [];
-      try { placedDecorations = JSON.parse(localStorage.getItem('rumah-kita-decor-v1') || '[]'); } catch (_) { placedDecorations = []; }
-      const decorPanel = document.getElementById('decorPanel');
-      const decorModeBtn = document.getElementById('decorModeBtn');
-      function drawPlacedDecorations() {
-        placedDecorations.forEach(item => {
-          const x = item.x, y = item.y;
-          if (item.type === 'plant') { ctx.fillStyle='#92400e'; ctx.fillRect(x-7,y+2,14,9); ctx.fillStyle='#16a34a'; ctx.beginPath(); ctx.arc(x,y-3,9,0,Math.PI*2); ctx.arc(x-6,y-5,5,0,Math.PI*2); ctx.arc(x+6,y-5,5,0,Math.PI*2); ctx.fill(); }
-          else if (item.type === 'rug') { ctx.fillStyle='#7c3aed'; ctx.fillRect(x-18,y-12,36,24); ctx.fillStyle='#c4b5fd'; ctx.fillRect(x-14,y-8,28,16); ctx.strokeStyle='#ede9fe'; ctx.strokeRect(x-16,y-10,32,20); }
-          else if (item.type === 'lamp') { ctx.fillStyle='#854d0e'; ctx.fillRect(x-3,y+3,6,10); ctx.fillStyle='#fde68a'; ctx.beginPath(); ctx.arc(x,y-2,9,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#fff7cc'; ctx.beginPath(); ctx.arc(x,y-2,4,0,Math.PI*2); ctx.fill(); }
-          else if (item.type === 'sofa') { ctx.fillStyle='#7c2d12'; ctx.fillRect(x-22,y-10,44,20); ctx.fillStyle='#ea580c'; ctx.fillRect(x-18,y-7,36,14); ctx.fillStyle='#fed7aa'; ctx.fillRect(x-16,y-6,12,12); ctx.fillRect(x+4,y-6,12,12); }
-          else if (item.type === 'table') { ctx.fillStyle='#78350f'; ctx.fillRect(x-15,y-11,30,22); ctx.fillStyle='#c08457'; ctx.fillRect(x-12,y-8,24,16); ctx.fillStyle='#166534'; ctx.fillRect(x-3,y-3,6,6); }
-          else if (item.type === 'toy') { ctx.fillStyle='#facc15'; ctx.fillRect(x-8,y-8,16,16); ctx.fillStyle='#ef4444'; ctx.fillRect(x-5,y-5,6,6); ctx.fillStyle='#3b82f6'; ctx.fillRect(x+1,y+1,6,6); }
-        });
-      }
-      function setDecorMode(enabled) { decorMode = enabled; decorPanel.hidden = !enabled; decorModeBtn.classList.toggle('primary', enabled); decorModeBtn.textContent = enabled ? '🪑 Hias: ON' : '🪑 Hias'; canvas.style.cursor = enabled ? 'crosshair' : ''; }
-      decorModeBtn.addEventListener('click', () => setDecorMode(!decorMode));
-      document.getElementById('decorExitBtn').addEventListener('click', () => setDecorMode(false));
-      document.getElementById('decorUndoBtn').addEventListener('click', () => { placedDecorations.pop(); try { localStorage.setItem('rumah-kita-decor-v1', JSON.stringify(placedDecorations)); } catch (_) {} });
-      decorPanel.querySelectorAll('[data-decor]').forEach(btn => btn.addEventListener('click', () => { selectedDecorType=btn.dataset.decor; decorPanel.querySelectorAll('[data-decor]').forEach(b=>b.classList.toggle('active',b===btn)); }));
-      decorPanel.querySelector('[data-decor="plant"]').classList.add('active');
-
       function drawWorld(nowSec) {
         const vw = canvas.clientWidth || window.innerWidth;
         const vh = canvas.clientHeight || window.innerHeight;
@@ -3864,7 +4319,6 @@
         ctx.scale(camera.zoom, camera.zoom);
         ctx.translate(-camera.x, -camera.y);
 
-        // 1. Grass, Path, Driveway
         for (let r = 0; r < ROWS; r++) {
           for (let c = 0; c < COLS; c++) {
             const cell = grid[idx(c, r)];
@@ -3885,7 +4339,6 @@
           }
         }
 
-        // Parking bay lines
         ctx.strokeStyle = '#f8fafc';
         ctx.lineWidth = 2;
         ctx.setLineDash([6, 4]);
@@ -3897,7 +4350,6 @@
         );
         ctx.setLineDash([]);
 
-        // 2. Interior Rooms
         ROOMS.forEach(rm => {
           for (let r = rm.r1; r <= rm.r2; r++) {
             for (let c = rm.c1; c <= rm.c2; c++) {
@@ -3934,35 +4386,34 @@
         drawRoomDecorations();
         drawFurnitureProps();
         drawAnimalHomes(nowSec);
-        drawSwimmingPool(nowSec);
         drawPlayground(nowSec);
-        drawPlacedDecorations();
         drawPerimeterAndGate();
         drawFamilyCar();
         drawPakNgahCar();
 
-        // Depth-sorted Characters & Pets
         const visibleEntities = characters
           .filter(ch => ch.active && ch.visible)
           .sort((a, b) => a.y - b.y);
 
-        visibleEntities.forEach(ch => drawCharacter(ch, nowSec));
 
-        // Ambient Day/Night Tint
         const lighting = getSmoothLightingStyle();
         if (lighting !== 'rgba(255, 255, 255, 0.0)') {
           ctx.fillStyle = lighting;
           ctx.fillRect(0, 0, WORLD_W, WORLD_H);
         }
 
-        // FASA F.6: Lampu malam selepas 22:00 hanya menyala jika bilik ada orang (guna cache glow)
         if (isNightAcceleratedActive()) {
           drawNightRoomLamps(nowSec);
         }
 
+        // Final world pass: keep pool water and entities above lighting/ambience overlays.
+        // This prevents the pool from appearing as a dark void and avoids characters
+        // being visually swallowed by the lighting tint.
+        drawSwimmingPool(nowSec);
+        visibleEntities.forEach(ch => drawCharacter(ch, nowSec));
+
         ctx.restore();
 
-        // FASA E.6: Lukis gelembung ucapan dalam ruang skrin (maks 5, paling dekat tengah skrin, pudar masuk/keluar, skala ikut zoom, emoji sahaja jika zoom < 0.45)
         drawSpeechBubbles(vw, vh);
       }
 
@@ -3976,8 +4427,8 @@
           const cy = ((rm.r1 + rm.r2 + 1) * 0.5) * TILE;
 
           if (rm.id === 'living') {
-            const tvWatched = characters.some(c => c.active && c.visible && c.activityKey === 'tv');
-            const alpha = tvWatched ? (0.25 + Math.sin(nowSec * 12) * 0.08) : 0.24;
+            const tvWatched = isAnyCharacterWatchingTv();
+            const alpha = tvWatched ? (0.32 + Math.sin(nowSec * 12) * 0.1) : 0.24;
             const glow = getCachedGlowCanvas(120, `rgba(125, 211, 252, ${alpha.toFixed(2)})`);
             ctx.drawImage(glow, cx - 120, cy - 120);
           } else if (rm.id === 'office') {
@@ -3995,7 +4446,6 @@
         ctx.restore();
       }
 
-      // FASA H.1: Cozy room and garden decoration pass (visual-only; does not affect pathfinding)
       function drawRoomDecorations() {
         const rect = (c, r, w, h, color) => { ctx.fillStyle = color; ctx.fillRect(c * TILE, r * TILE, w * TILE, h * TILE); };
         const outline = (c, r, w, h, color, width = 2) => { ctx.strokeStyle = color; ctx.lineWidth = width; ctx.strokeRect(c * TILE + 1, r * TILE + 1, w * TILE - 2, h * TILE - 2); };
@@ -4018,60 +4468,58 @@
         };
         const chair = (c, r, color = '#b45309') => { rect(c, r, 1, 1, '#7c4a22'); rect(c + 0.12, r + 0.12, 0.76, 0.76, color); rect(c + 0.12, r + 0.12, 0.76, 0.18, '#f5d0a0'); };
 
-        // Living room: warm rug, reading corner, side tables and greenery
         rug(24, 20, 7, 5, '#b86f52', '#7c3f35');
         rect(27, 21, 2, 2, '#8b5a2b'); rect(27.15, 21.15, 1.7, 1.7, '#c08457');
         rect(28, 21, 0.25, 2, '#e7c99b');
         shelf(32, 13, 2.5, 4, '#6b4428');
         plant(15, 13, '#b45309', '#166534'); plant(33, 24, '#a16207', '#15803d');
         rect(25, 13, 3, 1.1, '#c08457'); rect(25.15, 13.15, 2.7, 0.8, '#f1d3a7');
-        // Dining room: chair seats around the existing table and kitchen counter details
         chair(41, 17, '#b77945'); chair(41, 20, '#b77945'); chair(50, 17, '#b77945'); chair(50, 20, '#b77945');
         rect(37, 14, 4, 1, '#7c4a22'); rect(37, 14, 4, 0.25, '#c08457');
         rect(37, 15, 1, 1, '#64748b'); rect(38.2, 15, 1, 1, '#f8fafc'); rect(39.4, 15, 1, 1, '#22c55e');
         rect(53, 13, 2, 3, '#94a3b8'); rect(53.15, 13.15, 1.7, 2.7, '#cbd5e1');
-        // Playroom: colorful rug, toy shelf, blocks and teddy bear
         rug(59, 19, 9, 5, '#f0b7d2', '#b45c8a');
         shelf(57, 13, 4, 2, '#8b5a2b');
         rect(62, 14, 1, 1, '#ef4444'); rect(63, 14, 1, 1, '#3b82f6'); rect(64, 14, 1, 1, '#facc15');
         rect(62, 15, 2, 1, '#22c55e'); rect(65, 15, 1, 1, '#a855f7');
         ctx.fillStyle = '#c084fc'; ctx.beginPath(); ctx.arc(68 * TILE, 22 * TILE, 7, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#f5d0fe'; ctx.beginPath(); ctx.arc(68 * TILE - 3, 22 * TILE - 2, 2, 0, Math.PI * 2); ctx.arc(68 * TILE + 3, 22 * TILE - 2, 2, 0, Math.PI * 2); ctx.fill();
-        // Home office: desk mat, bookshelf, chair and floor lamp
         rug(22, 34, 6, 4, '#64748b', '#334155');
         shelf(27, 28, 3, 5, '#6b4428');
         chair(22, 31, '#475569');
         ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(29 * TILE, 37 * TILE); ctx.lineTo(29 * TILE, 35 * TILE); ctx.stroke();
         ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(29 * TILE, 34.5 * TILE, 5, 0, Math.PI * 2); ctx.fill();
         plant(15, 37, '#92400e', '#166534');
-        // Bathroom: bath mat, sink mirror and towel rack
-        rug(34, 31, 4, 2, '#93c5fd', '#e0f2fe');
-        rect(38, 28, 2, 1, '#94a3b8'); rect(38.1, 28.1, 1.8, 0.8, '#e2e8f0');
-        rect(38.6, 28.25, 0.6, 0.35, '#38bdf8');
-        rect(32, 29, 0.5, 3, '#64748b'); rect(32.5, 29, 1.5, 0.5, '#f8fafc'); rect(32.5, 30, 1.5, 0.5, '#93c5fd');
-        // Bedroom: shared bedside tables, warm rugs and wardrobe
-        rug(46, 33, 5, 4, '#d8b4fe', '#8b5cf6');
+        // Bilik tidur anak-anak (ruang bekas bilik mandi): rug, rak buku dan kawasan bermain.
+        rug(32, 32, 8, 4, '#93c5fd', '#e0f2fe');
+        shelf(31.5, 27.5, 2.5, 4, '#8b5a2b');
+        rect(38, 27.5, 2.5, 1, '#b45309'); rect(38.15, 27.65, 2.2, 0.7, '#f1d3a7');
+        rect(38.5, 29, 1, 1, '#ef4444'); rect(39.5, 29, 1, 1, '#3b82f6'); rect(38.5, 30, 1, 1, '#22c55e');
+        rect(31.5, 37, 2, 1, '#64748b'); rect(31.65, 37.15, 1.7, 0.7, '#cbd5e1');
+        // Bilik mandi (ruang bekas dobi): zon basah, sink dan kabinet.
+        rug(66, 32, 3, 2, '#93c5fd', '#e0f2fe');
+        rect(66, 27.5, 3.5, 2.5, '#94a3b8'); rect(66.15, 27.65, 3.2, 2.2, '#e2e8f0');
+        rect(67, 28, 1.5, 1.5, '#38bdf8'); rect(67.15, 28.15, 1.2, 1.2, '#bae6fd');
+        rect(70, 27.5, 1.5, 1.5, '#f8fafc'); rect(70.15, 27.65, 1.2, 1.2, '#cbd5e1');
+        rect(70.25, 28.5, 0.4, 0.8, '#94a3b8');
+        rect(66, 35, 2, 1, '#64748b'); rect(66.15, 35.15, 1.7, 0.7, '#cbd5e1');
+        rect(69, 35, 2, 1, '#f8fafc'); rect(69.15, 35.15, 1.7, 0.7, '#93c5fd');
+        // Main bedroom: replace the previous purple floor graphic with a warm woven carpet.
+        rug(46, 33, 5, 4, '#d6b98c', '#8b7355');
+        rect(46.35, 33.35, 4.3, 0.18, '#b08b62');
+        rect(46.35, 36.45, 4.3, 0.18, '#b08b62');
+        rect(46.35, 33.55, 0.18, 2.8, '#b08b62');
+        rect(50.45, 33.55, 0.18, 2.8, '#b08b62');
         rect(42, 27, 1, 2, '#8b5a2b'); rect(49, 27, 1, 2, '#8b5a2b');
         rect(42.15, 27.15, 0.7, 0.7, '#fbbf24'); rect(49.15, 27.15, 0.7, 0.7, '#fbbf24');
         shelf(56, 33, 2, 5, '#7c4a22');
         rect(44, 26, 3, 0.4, '#b45309'); rect(44.2, 26.1, 0.8, 0.25, '#fef3c7'); rect(45.2, 26.1, 0.8, 0.25, '#fef3c7'); rect(46.2, 26.1, 0.8, 0.25, '#fef3c7');
-        // Toilet: subtle bath mat and roll holder
         rug(61, 34, 2, 2, '#a5f3fc', '#0891b2');
         rect(64, 30, 0.3, 1, '#94a3b8'); ctx.fillStyle = '#f8fafc'; ctx.beginPath(); ctx.arc(64.3 * TILE, 30.5 * TILE, 5, 0, Math.PI * 2); ctx.fill();
-        // Laundry: washer details, folded towels and drying shelf
-        rect(68, 28, 3, 1, '#64748b'); rect(68.15, 28.15, 2.7, 0.7, '#cbd5e1');
-        ctx.strokeStyle = '#64748b'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(69.5 * TILE, 29.7 * TILE, 8, 0, Math.PI * 2); ctx.stroke();
-        rect(66, 32, 2, 1, '#f8fafc'); rect(66.1, 32.1, 1.8, 0.8, '#bfdbfe'); rect(66, 33, 2, 1, '#f8fafc');
-        // Garden beds and trees around the perimeter (kept away from walkways)
         const flowerBed = (c, r, w) => { rect(c, r, w, 1, '#7c3f35'); for (let i = 0; i < w * 2; i++) { const fx = (c + 0.25 + (i % (w * 2)) * 0.48) * TILE; const fy = (r + 0.5 + (i % 2 ? 0.12 : -0.12)) * TILE; ctx.fillStyle = ['#f472b6','#facc15','#fb7185','#c084fc'][i % 4]; ctx.beginPath(); ctx.arc(fx, fy, 3.5, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#166534'; ctx.fillRect(fx - 1, fy + 3, 2, 4); } };
-        flowerBed(13, 7, 8); flowerBed(72, 7, 7); flowerBed(13, 54, 7);
+        flowerBed(13, 7, 8); flowerBed(72, 7, 7); // Keep driveway and parking approach clear.
         plant(10, 8, '#92400e', '#166534'); plant(78, 8, '#92400e', '#166534'); plant(77, 55, '#92400e', '#166534');
-        // Poolside loungers and umbrellas
-        rect(63, 40, 3, 1, '#f8fafc'); rect(63.15, 40.15, 2.7, 0.7, '#f97316');
-        rect(69, 40, 3, 1, '#f8fafc'); rect(69.15, 40.15, 2.7, 0.7, '#22c55e');
-        ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(65 * TILE, 39 * TILE, 12, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#f97316'; ctx.beginPath(); ctx.arc(72 * TILE, 39 * TILE, 12, 0, Math.PI * 2); ctx.fill();
-        // Patio seating and BBQ corner
+        // Removed cluttered pool-deck props from the previous layout; keep the pool entrance clear.
         rug(39, 49, 8, 4, '#c08457', '#7c4a22');
         rect(41, 50, 4, 2, '#78350f'); rect(41.15, 50.15, 3.7, 1.7, '#b45309');
         chair(39, 50, '#a16207'); chair(46, 50, '#a16207');
@@ -4079,12 +4527,18 @@
       }
 
       function drawFurnitureProps() {
+        const rect = (c, r, w, h, color) => { ctx.fillStyle = color; ctx.fillRect(c * TILE, r * TILE, w * TILE, h * TILE); };
+        const tvActive = isAnyCharacterWatchingTv();
         ctx.fillStyle = '#0284c7';
         ctx.fillRect(16 * TILE, 19 * TILE + 4, 8 * TILE, TILE - 5);
         ctx.fillStyle = '#1e293b';
         ctx.fillRect(17 * TILE, 12 * TILE + 2, 6 * TILE, TILE * 0.7);
-        ctx.fillStyle = '#38bdf8';
+        ctx.fillStyle = tvActive ? '#38bdf8' : '#1e3a5f';
         ctx.fillRect(17 * TILE + 3, 12 * TILE + 4, 6 * TILE - 6, TILE * 0.45);
+        if (tvActive) {
+          ctx.fillStyle = '#fef08a';
+          ctx.fillRect(17 * TILE + 6, 12 * TILE + 6, 14, 3);
+        }
 
         ctx.fillStyle = '#94a3b8';
         ctx.fillRect(37 * TILE, 12 * TILE, 17 * TILE, TILE);
@@ -4105,30 +4559,74 @@
         ctx.fillRect(17 * TILE + 6, 31 * TILE + 8, 12, 7);
 
         const drawBed = (c, r, wTiles, hTiles, blanketColor) => {
-          ctx.fillStyle = '#78350f';
-          ctx.fillRect(c * TILE, r * TILE, wTiles * TILE, hTiles * TILE);
-          ctx.fillStyle = '#f8fafc';
-          ctx.fillRect(c * TILE + 3, r * TILE + 3, wTiles * TILE - 6, 8);
-          ctx.fillStyle = blanketColor;
-          ctx.fillRect(c * TILE + 3, r * TILE + 12, wTiles * TILE - 6, hTiles * TILE - 15);
+          ctx.fillStyle = '#78350f'; ctx.fillRect(c * TILE, r * TILE, wTiles * TILE, hTiles * TILE);
+          ctx.fillStyle = '#f8fafc'; ctx.fillRect(c * TILE + 3, r * TILE + 3, wTiles * TILE - 6, 8);
+          ctx.fillStyle = blanketColor; ctx.fillRect(c * TILE + 3, r * TILE + 12, wTiles * TILE - 6, hTiles * TILE - 15);
+          ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(c * TILE + 5, r * TILE + 14, wTiles * TILE - 10, 2);
         };
+        // Bilik tidur utama: katil double dan meja sisi.
         drawBed(43, 28, 6, 3.5, '#2563eb');
-        drawBed(52, 28, 3.5, 3.5, '#22c55e');
-        drawBed(52, 34, 3.5, 3.5, '#f97316');
+        rect(42, 27, 1, 2, '#8b5a2b'); rect(49, 27, 1, 2, '#8b5a2b');
+        rect(42.15, 27.15, 0.7, 0.7, '#fbbf24'); rect(49.15, 27.15, 0.7, 0.7, '#fbbf24');
+        // Bilik anak-anak: empat katil, toy chest, meja lukisan dan rak buku.
+        drawBed(32, 28, 3.5, 3.5, '#22c55e');
+        drawBed(36, 28, 3.5, 3.5, '#f97316');
+        // Keep the children's room open: two main beds with a shared play zone.
+        rect(39, 34, 1.5, 2.5, '#8b5a2b'); rect(39.15, 34.15, 1.2, 2.2, '#d6b38b');
+        rect(32, 37, 2.5, 1.2, '#b45309'); rect(32.15, 37.15, 2.2, 0.9, '#f1d3a7');
+        rect(34.5, 37, 1, 1, '#ef4444'); rect(35.5, 37, 1, 1, '#3b82f6'); rect(36.5, 37, 1, 1, '#22c55e');
+        rect(38, 37, 2, 1.5, '#7c3f35'); rect(38.15, 37.15, 1.7, 1.2, '#c08457');
+        // Bilik mandi: bathtub, shower, sink, toilet, kabinet dan tuala.
+        rect(66, 27, 3.5, 2.5, '#e2e8f0'); rect(66.15, 27.15, 3.2, 2.2, '#bae6fd');
+        rect(66.4, 27.4, 2.7, 1.7, '#38bdf8'); rect(66.6, 27.6, 2.3, 1.3, '#e0f2fe');
+        rect(70, 27, 1.5, 2.5, '#94a3b8'); rect(70.15, 27.15, 1.2, 2.2, '#cbd5e1');
+        ctx.strokeStyle = '#64748b'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(70.75 * TILE, 27.2 * TILE); ctx.lineTo(70.75 * TILE, 28.2 * TILE); ctx.stroke();
+        rect(66, 31, 2.5, 1, '#94a3b8'); rect(66.15, 31.15, 2.2, 0.7, '#f8fafc');
+        ctx.fillStyle = '#f8fafc'; ctx.beginPath(); ctx.ellipse(67.25 * TILE, 31.7 * TILE, 8, 5, 0, 0, Math.PI * 2); ctx.fill();
+        rect(69, 31, 1.5, 2, '#f8fafc'); rect(69.15, 31.15, 1.2, 1.7, '#cbd5e1');
+        rect(70.5, 33.5, 1.5, 2, '#8b5a2b'); rect(70.65, 33.65, 1.2, 1.7, '#c08457');
+        rect(66, 35, 1.5, 1, '#60a5fa'); rect(66.15, 35.15, 1.2, 0.7, '#dbeafe');
+        rect(68, 35, 1.5, 1, '#f472b6'); rect(68.15, 35.15, 1.2, 0.7, '#fce7f3');
+        rect(70, 35, 1.5, 1, '#22c55e'); rect(70.15, 35.15, 1.2, 0.7, '#dcfce7');
+        // Mangkuk makanan dan air haiwan di kawasan luar.
+        const petBowl = (c, r, fill) => { ctx.fillStyle = '#64748b'; ctx.fillRect(c * TILE + 2, r * TILE + 4, 12, 7); ctx.fillStyle = fill; ctx.fillRect(c * TILE + 4, r * TILE + 5, 8, 4); };
+        petBowl(29, 48, '#d97706'); petBowl(30, 48, '#38bdf8');
+        // Animated food cues when a caregiver is actively feeding pets.
+        const feeders = characters.filter(c => c.active && c.visible && c.activityKey === 'pet_feed' && c.actionMode !== 'sleep');
+        feeders.forEach((feeder, fi) => {
+          const fx = 29.5 * TILE, fy = 48.2 * TILE;
+          ctx.fillStyle = '#fbbf24';
+          for (let k = 0; k < 4; k++) {
+            const pulse = (performance.now()/1000 + k*0.27 + fi*0.2) % 1;
+            ctx.fillRect(fx + (k-1.5)*5, fy - 3 - pulse*8, 3, 3);
+          }
+        });
+        // Toy train track in the playroom: visual clue that the room contains toys.
+        ctx.strokeStyle = '#78350f'; ctx.lineWidth = 5; ctx.beginPath();
+        ctx.ellipse(62.5 * TILE, 18.4 * TILE, 2.0 * TILE, 1.15 * TILE, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = '#d6b38b'; ctx.lineWidth = 2; ctx.beginPath();
+        ctx.ellipse(62.5 * TILE, 18.4 * TILE, 2.0 * TILE, 1.15 * TILE, 0, 0, Math.PI * 2); ctx.stroke();
+        const trainX = 62.5 * TILE + Math.cos(performance.now() / 1000 * 0.35) * 2.0 * TILE;
+        const trainY = 18.4 * TILE + Math.sin(performance.now() / 1000 * 0.35) * 1.15 * TILE;
+        ctx.fillStyle = '#dc2626'; ctx.fillRect(trainX - 7, trainY - 5, 14, 10);
+        ctx.fillStyle = '#facc15'; ctx.fillRect(trainX - 3, trainY - 9, 7, 4);
+        ctx.fillStyle = '#1f2937'; ctx.beginPath(); ctx.arc(trainX - 4, trainY + 5, 2.5, 0, Math.PI*2); ctx.arc(trainX + 4, trainY + 5, 2.5, 0, Math.PI*2); ctx.fill();
+        // Shower particles: visible only when a character is actively showering.
+        const showerUsers = characters.filter(c => c.active && c.visible && (c.activityKey === 'shower' || c.activityKey === 'hygiene') && getCurrentRoomAt(c.x,c.y) === 'bathroom');
+        showerUsers.forEach((user, n) => {
+          const sx = 70.75 * TILE, sy = 28.3 * TILE;
+          for (let i=0; i<9; i++) {
+            const phase = (nowSeconds * 3.5 + i * 0.31 + n * 0.4) % 1;
+            const dx = Math.sin(i * 2.3 + performance.now() / 1000) * 7;
+            const dy = phase * 18;
+            ctx.fillStyle = 'rgba(125,211,252,0.75)'; ctx.fillRect(sx + dx, sy + dy, 2, 3);
+          }
+          ctx.fillStyle = 'rgba(186,230,253,0.16)'; ctx.fillRect(69.8*TILE, 27.8*TILE, 1.9*TILE, 2.5*TILE);
+        });
+        // Removed the duplicate pet bowls from the parking bay to keep the driveway visually clear.
 
-        ctx.fillStyle = '#f1f5f9';
-        ctx.fillRect(32 * TILE + 2, 34 * TILE + 2, 3.5 * TILE, 4 * TILE);
-        ctx.fillStyle = '#38bdf8';
-        ctx.fillRect(32 * TILE + 5, 34 * TILE + 5, 3.5 * TILE - 6, 4 * TILE - 6);
-
-        ctx.fillStyle = '#f8fafc';
-        ctx.fillRect(60 * TILE + 4, 35 * TILE + 4, 2 * TILE - 8, 2 * TILE - 6);
-
-        ctx.fillStyle = '#cbd5e1';
-        ctx.fillRect(67 * TILE + 2, 34 * TILE + 2, 3.5 * TILE, 3.5 * TILE);
       }
 
-      // FASA F.7: Lukis rumah haiwan & ikon tidur + "zzz" apabila haiwan tidur di dalam
       function drawAnimalHomes(nowSec) {
         Object.values(ANIMAL_HOMES).forEach(h => {
           const x = h.c1 * TILE;
@@ -4156,11 +4654,22 @@
         const pw = (POOL.c2 - POOL.c1 + 1) * TILE;
         const ph = (POOL.r2 - POOL.r1 + 1) * TILE;
 
+        // Pool surround and tiled coping.
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillRect(px - 8, py - 8, pw + 16, ph + 16);
         ctx.fillStyle = '#f8fafc';
         ctx.fillRect(px - 4, py - 4, pw + 8, ph + 8);
-
-        ctx.fillStyle = '#0ea5e9';
+        ctx.fillStyle = '#0c4a6e';
         ctx.fillRect(px, py, pw, ph);
+        ctx.fillStyle = '#0284c7';
+        ctx.fillRect(px + 3, py + 3, pw - 6, ph - 6);
+        // Shallow ledge and visible water tiles.
+        ctx.fillStyle = 'rgba(186,230,253,0.38)';
+        ctx.fillRect(px + 4, py + 4, 20, ph - 8);
+        ctx.strokeStyle = 'rgba(224,242,254,0.22)';
+        ctx.lineWidth = 1;
+        for (let c = 1; c < 8; c++) ctx.beginPath(), ctx.moveTo(px + c * (pw / 8), py + 2), ctx.lineTo(px + c * (pw / 8), py + ph - 2), ctx.stroke();
+        for (let r = 1; r < 5; r++) ctx.beginPath(), ctx.moveTo(px + 2, py + r * (ph / 5)), ctx.lineTo(px + pw - 2, py + r * (ph / 5)), ctx.stroke();
 
         ctx.strokeStyle = 'rgba(224, 242, 254, 0.35)';
         ctx.lineWidth = 1.5;
@@ -4172,10 +4681,18 @@
           ctx.stroke();
         }
 
-        // Pool float ring, beach ball and diving board (visual-only).
-        const ringX=px+pw*0.68, ringY=py+ph*0.35; ctx.lineWidth=9;ctx.strokeStyle='#f472b6';ctx.beginPath();ctx.arc(ringX,ringY,18,0,Math.PI*2);ctx.stroke();ctx.lineWidth=3;ctx.strokeStyle='#fce7f3';ctx.beginPath();ctx.arc(ringX,ringY,12,0,Math.PI*2);ctx.stroke();
-        const ballX=px+pw*0.30, ballY=py+ph*0.72+Math.sin(nowSec*2)*2;ctx.fillStyle='#facc15';ctx.beginPath();ctx.arc(ballX,ballY,10,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ef4444';ctx.fillRect(ballX-3,ballY-9,6,18);ctx.fillStyle='#3b82f6';ctx.fillRect(ballX-9,ballY-3,18,6);
-        ctx.fillStyle='#cbd5e1';ctx.fillRect(px-20,py+ph*0.55,18,5);ctx.fillStyle='#64748b';ctx.fillRect(px-17,py+ph*0.55+5,3,10);ctx.fillRect(px-5,py+ph*0.55+5,3,10);
+        const ringX = px + pw * 0.68, ringY = py + ph * 0.35;
+        ctx.lineWidth = 9; ctx.strokeStyle = '#f472b6'; ctx.beginPath(); ctx.arc(ringX, ringY, 18, 0, Math.PI * 2); ctx.stroke();
+        ctx.lineWidth = 3; ctx.strokeStyle = '#fce7f3'; ctx.beginPath(); ctx.arc(ringX, ringY, 12, 0, Math.PI * 2); ctx.stroke();
+
+        const ballX = px + pw * 0.30, ballY = py + ph * 0.72 + Math.sin(nowSec * 2) * 2;
+        ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(ballX, ballY, 10, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ef4444'; ctx.fillRect(ballX - 3, ballY - 9, 6, 18);
+        ctx.fillStyle = '#3b82f6'; ctx.fillRect(ballX - 9, ballY - 3, 18, 6);
+
+        ctx.fillStyle = '#cbd5e1'; ctx.fillRect(px - 20, py + ph * 0.55, 18, 5);
+        ctx.fillStyle = '#64748b'; ctx.fillRect(px - 17, py + ph * 0.55 + 5, 3, 10); ctx.fillRect(px - 5, py + ph * 0.55 + 5, 3, 10);
+
         const lx = POOL.ladderC * TILE + 4;
         const ly = POOL.ladderR * TILE;
         ctx.strokeStyle = '#e2e8f0';
@@ -4192,25 +4709,27 @@
         ctx.stroke();
       }
 
-      // FASA G.6: Playground + BBQ grill pot & animated smoke
       function drawPlayground(nowSec) {
-        // Multi-piece play structure with platform, ladder, safety rails and tube slide.
-        const pX = 37*TILE, pY = 43*TILE;
-        ctx.fillStyle='#854d0e'; ctx.fillRect(pX-20,pY-10,40,30);
-        ctx.fillStyle='#f59e0b'; ctx.fillRect(pX-18,pY-28,36,18);
-        ctx.fillStyle='#fef3c7'; ctx.fillRect(pX-14,pY-24,28,10);
-        ctx.strokeStyle='#b45309'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(pX-18,pY-10); ctx.lineTo(pX-18,pY+20); ctx.moveTo(pX+18,pY-10); ctx.lineTo(pX+18,pY+20); ctx.stroke();
-        ctx.strokeStyle='#64748b'; ctx.lineWidth=3; ctx.beginPath(); for(let i=0;i<5;i++){const lx=pX-16+i*7;ctx.moveTo(lx,pY+5);ctx.lineTo(lx,pY+20);}ctx.stroke();
-        // Tube slide and bright landing zone.
-        ctx.fillStyle='#ef4444'; ctx.beginPath(); ctx.moveTo(pX+18,pY-23);ctx.lineTo(pX+48,pY+12);ctx.lineTo(pX+40,pY+16);ctx.lineTo(pX+12,pY-18);ctx.closePath();ctx.fill();ctx.fillStyle='#fca5a5';ctx.fillRect(pX+28,pY-3,12,4);
-        // Sandbox with textured sand, corner posts, bucket and shovel.
-        const sx=54*TILE, sy=54*TILE; ctx.fillStyle='#92400e';ctx.fillRect(sx-34,sy-22,68,44);ctx.fillStyle='#f4d28a';ctx.fillRect(sx-29,sy-17,58,34);
-        ctx.fillStyle='#d6a75d';for(let i=0;i<18;i++){const tx=sx-25+(i%6)*9,ty=sy-13+Math.floor(i/6)*9;ctx.fillRect(tx,ty,3,3);}
-        ctx.fillStyle='#3b82f6';ctx.fillRect(sx-22,sy-15,8,9);ctx.fillStyle='#60a5fa';ctx.fillRect(sx-24,sy-18,12,3);ctx.strokeStyle='#ef4444';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(sx+18,sy+9);ctx.lineTo(sx+27,sy-10);ctx.stroke();ctx.fillStyle='#f97316';ctx.fillRect(sx+24,sy-15,8,6);
-        // Small sand castle.
-        ctx.fillStyle='#d6a75d';ctx.fillRect(sx-5,sy-4,14,12);ctx.fillRect(sx-2,sy-12,8,8);ctx.fillRect(sx-9,sy-9,5,5);ctx.fillRect(sx+9,sy-9,5,5);ctx.fillStyle='#fef3c7';ctx.fillRect(sx-2,sy-2,4,4);
-        // Playground bench for adults.
-        ctx.fillStyle='#7c4a22';ctx.fillRect(31*TILE,53*TILE,4*TILE,8);ctx.fillStyle='#b45309';ctx.fillRect(31*TILE,53*TILE-5,4*TILE,4);
+        const pX = 37 * TILE, pY = 43 * TILE;
+        ctx.fillStyle = '#854d0e'; ctx.fillRect(pX - 20, pY - 10, 40, 30);
+        ctx.fillStyle = '#f59e0b'; ctx.fillRect(pX - 18, pY - 28, 36, 18);
+        ctx.fillStyle = '#fef3c7'; ctx.fillRect(pX - 14, pY - 24, 28, 10);
+        ctx.strokeStyle = '#b45309'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(pX - 18, pY - 10); ctx.lineTo(pX - 18, pY + 20); ctx.moveTo(pX + 18, pY - 10); ctx.lineTo(pX + 18, pY + 20); ctx.stroke();
+        ctx.strokeStyle = '#64748b'; ctx.lineWidth = 3; ctx.beginPath(); for (let i = 0; i < 5; i++) { const lx = pX - 16 + i * 7; ctx.moveTo(lx, pY + 5); ctx.lineTo(lx, pY + 20); } ctx.stroke();
+
+        ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.moveTo(pX + 18, pY - 23); ctx.lineTo(pX + 48, pY + 12); ctx.lineTo(pX + 40, pY + 16); ctx.lineTo(pX + 12, pY - 18); ctx.closePath(); ctx.fill(); ctx.fillStyle = '#fca5a5'; ctx.fillRect(pX + 28, pY - 3, 12, 4);
+
+        const sx = 54 * TILE, sy = 54 * TILE;
+        ctx.fillStyle = '#92400e'; ctx.fillRect(sx - 34, sy - 22, 68, 44);
+        ctx.fillStyle = '#f4d28a'; ctx.fillRect(sx - 29, sy - 17, 58, 34);
+        ctx.fillStyle = '#d6a75d'; for (let i = 0; i < 18; i++) { const tx = sx - 25 + (i % 6) * 9, ty = sy - 13 + Math.floor(i / 6) * 9; ctx.fillRect(tx, ty, 3, 3); }
+        ctx.fillStyle = '#3b82f6'; ctx.fillRect(sx - 22, sy - 15, 8, 9); ctx.fillStyle = '#60a5fa'; ctx.fillRect(sx - 24, sy - 18, 12, 3);
+        ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(sx + 18, sy + 9); ctx.lineTo(sx + 27, sy - 10); ctx.stroke(); ctx.fillStyle = '#f97316'; ctx.fillRect(sx + 24, sy - 15, 8, 6);
+
+        ctx.fillStyle = '#d6a75d'; ctx.fillRect(sx - 5, sy - 4, 14, 12); ctx.fillRect(sx - 2, sy - 12, 8, 8); ctx.fillRect(sx - 9, sy - 9, 5, 5); ctx.fillRect(sx + 9, sy - 9, 5, 5); ctx.fillStyle = '#fef3c7'; ctx.fillRect(sx - 2, sy - 2, 4, 4);
+
+        ctx.fillStyle = '#7c4a22'; ctx.fillRect(31 * TILE, 53 * TILE, 4 * TILE, 8); ctx.fillStyle = '#b45309'; ctx.fillRect(31 * TILE, 53 * TILE - 5, 4 * TILE, 4);
+
         const sl = PLAYGROUND.slide;
         ctx.fillStyle = '#facc15';
         ctx.fillRect(sl.x - 10, sl.y - 16, 12, 24);
@@ -4247,7 +4766,6 @@
         ctx.fillStyle = '#38bdf8';
         ctx.fillRect(sw.x - 7 + swingOffset, sw.y + 6, 14, 4);
 
-        // BBQ Grill Pot & Animated Smoke (Sabtu petang atau aktiviti BBQ)
         const wd = getWeekday();
         const { hours24 } = getCurrentClock();
         const showBbq = PLAYGROUND.bbq.active || (wd === 'Sabtu' && hours24 >= 16 && hours24 < 19);
@@ -4262,11 +4780,11 @@
           ctx.fill();
           for (let s = 0; s < 3; s++) {
             const prog = ((nowSec * 0.8 + s * 0.33) % 1);
-            const sx = bx + Math.sin(nowSec * 3 + s) * 6;
-            const sy = by - 16 - prog * 22;
+            const smokeX = bx + Math.sin(nowSec * 3 + s) * 6;
+            const smokeY = by - 16 - prog * 22;
             ctx.fillStyle = `rgba(226, 232, 240, ${(0.55 * (1 - prog)).toFixed(2)})`;
             ctx.beginPath();
-            ctx.arc(sx, sy, 4 + prog * 5, 0, Math.PI * 2);
+            ctx.arc(smokeX, smokeY, 4 + prog * 5, 0, Math.PI * 2);
             ctx.fill();
           }
         }
@@ -4315,7 +4833,6 @@
         ctx.fillRect(x + cw - 9, y + ch - 4, 6, 3);
       }
 
-      // Kereta hijau Pak Ngah berhenti seketika di jalan depan pagar
       function drawPakNgahCar() {
         if (!pakNgahCar.active) return;
         const cw = 42;
@@ -4332,19 +4849,55 @@
 
       function drawCharacter(ch, nowSec) {
         const s = ch.scale || 1;
-        const bob = ch.path.length > 0 ? Math.abs(Math.sin(ch.animPhase)) * 3.2 : Math.sin(nowSec * 3 + ch.animPhase) * 1.2;
-        const x = ch.x;
-        const y = ch.y - bob;
+        const isLyingOnBed = ch.actionMode === 'sleep' && !ch.isPet;
+        // Bob licin (tanpa kink abs(sin)), amplitud kecil & koordinat dikunci ke piksel peranti
+        // supaya sprite tidak 'shimmer' semasa bergerak.
+        const walkingNow = ch.path.length > 0;
+        const bob = isLyingOnBed ? 0 : (walkingNow ? (1 - Math.cos(ch.animPhase * 2)) * 0.8 : Math.sin(nowSec * 2 + ch.animPhase) * 0.8);
+        const snapK = camera.zoom * Math.min(window.devicePixelRatio || 1, 2);
+        const baseX = Math.round(ch.x * snapK) / snapK;
+        const baseY = Math.round(ch.y * snapK) / snapK;
+        let x = baseX;
+        let y = Math.round((ch.y - bob) * snapK) / snapK;
+        // Playground: anchor occupants to actual equipment, with visible activity cycles.
+        if (!walkingNow && ch.activityKey === 'slide') {
+          const sl = PLAYGROUND.slide;
+          const phase = (nowSec * 0.72 + ch.animPhase * 0.17) % 1;
+          // climb/queue at ladder -> slide along the chute -> return to ladder
+          if (phase < 0.24) { x = sl.x - 13 * s; y = sl.y - 18 * s + Math.sin(phase / 0.24 * Math.PI) * 2 * s; }
+          else if (phase < 0.78) { const t = (phase - 0.24) / 0.54; x = sl.x + (8 + t * 22) * s; y = sl.y - 8 * s + t * 17 * s; }
+          else { const t = (phase - 0.78) / 0.22; x = sl.x - 13 * s; y = sl.y - 18 * s + (1 - t) * 3 * s; }
+        } else if (!walkingNow && ch.activityKey === 'swing') {
+          const sw = PLAYGROUND.swing;
+          const swingPhase = Math.sin(nowSec * 3.2 + ch.animPhase);
+          x = sw.x + swingPhase * 8 * s;
+          y = sw.y - 3 * s + Math.abs(swingPhase) * 5 * s;
+        } else if (!walkingNow && ch.activityKey === 'seesaw') {
+          const ss = PLAYGROUND.seesaw;
+          const kidIds = ['isaac','hayyan','zaef','ayden','aufa','alina','afiyah'];
+          const seatSide = kidIds.includes(ch.id) ? (kidIds.indexOf(ch.id) % 2 ? 1 : -1) : (ch.animPhase % 2 ? -1 : 1);
+          const rocking = Math.sin(nowSec * 2.35 + ch.animPhase);
+          x = ss.x + seatSide * 19 * s;
+          y = ss.y - 5 * s + rocking * seatSide * 5 * s;
+        }
+
+        if (!walkingNow && ch.activityKey === 'slide') {
+          const slidePhase = (nowSec * 0.72 + ch.animPhase * 0.17) % 1;
+          if (slidePhase >= 0.24 && slidePhase < 0.78) {
+            const progress = (slidePhase - 0.24) / 0.54;
+            ctx.fillStyle = 'rgba(255,255,255,0.75)';
+            ctx.beginPath(); ctx.arc(x - 8 * s, y - 3 * s, 1.5 * s, 0, Math.PI * 2); ctx.fill();
+          }
+        }
 
         if (ch.id === selectedEntityId) {
           ctx.strokeStyle = '#fde047';
           ctx.lineWidth = 2;
           ctx.beginPath();
-          ctx.ellipse(ch.x, ch.y + 2, 13 * s, 6 * s, 0, 0, Math.PI * 2);
+          ctx.ellipse(baseX, baseY + 2, 13 * s, 6 * s, 0, 0, Math.PI * 2);
           ctx.stroke();
         }
 
-        // Penanda "IT" untuk permainan kejar-kejar
         if (ch.id === tagItCharacterId && ch.activityKey === 'tag') {
           ctx.fillStyle = '#ef4444';
           ctx.font = 'bold 10px sans-serif';
@@ -4354,24 +4907,45 @@
 
         ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
         ctx.beginPath();
-        ctx.ellipse(ch.x, ch.y + 2, 10 * s, 4.5 * s, 0, 0, Math.PI * 2);
+        ctx.ellipse(baseX, baseY + 2, isLyingOnBed ? 16 * s : 10 * s, 4.5 * s, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        if (ch.isPet) {
+        if (isLyingOnBed) {
+          ctx.fillStyle = ch.pantsColor || '#1e293b';
+          ctx.fillRect(x - 12 * s, y - 6 * s, 8 * s, 6 * s);
+          ctx.fillStyle = ch.shirtColor;
+          ctx.beginPath();
+          ctx.roundRect(x - 5 * s, y - 8 * s, 12 * s, 8 * s, 3 * s);
+          ctx.fill();
+          ctx.fillStyle = ch.skinColor;
+          ctx.beginPath();
+          ctx.arc(x + 11 * s, y - 5 * s, 6 * s, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = ch.hijabi ? ch.hairColor : ch.hairColor;
+          ctx.beginPath();
+          ctx.arc(x + 10.5 * s, y - 6 * s, 6.2 * s, Math.PI * 0.6, Math.PI * 1.8);
+          ctx.fill();
+        } else if (ch.isPet) {
           if (ch.petType === 'cat') {
             ctx.fillStyle = ch.shirtColor;
             ctx.beginPath();
-            ctx.roundRect(x - 8 * s, y - 9 * s, 16 * s, 10 * s, 4 * s);
+            ctx.ellipse(x, y - 6 * s, 9 * s, 5.5 * s, 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.beginPath();
-            ctx.arc(x + ch.facing * 6 * s, y - 10 * s, 6 * s, 0, Math.PI * 2);
+            ctx.arc(x + ch.facing * 6 * s, y - 11 * s, 4.5 * s, 0, Math.PI * 2);
             ctx.fill();
             ctx.beginPath();
-            ctx.moveTo(x + ch.facing * 3 * s, y - 14 * s);
-            ctx.lineTo(x + ch.facing * 5 * s, y - 20 * s);
-            ctx.lineTo(x + ch.facing * 8 * s, y - 14 * s);
+            ctx.moveTo(x + ch.facing * 4 * s, y - 14 * s);
+            ctx.lineTo(x + ch.facing * 2 * s, y - 18 * s);
+            ctx.lineTo(x + ch.facing * 6 * s, y - 15 * s);
             ctx.fill();
-          } else if (ch.petType === 'chicken') {
+            ctx.strokeStyle = ch.shirtColor;
+            ctx.lineWidth = 2 * s;
+            ctx.beginPath();
+            ctx.moveTo(x - ch.facing * 8 * s, y - 7 * s);
+            ctx.quadraticCurveTo(x - ch.facing * 13 * s, y - 13 * s, x - ch.facing * 11 * s, y - 17 * s);
+            ctx.stroke();
+          } else {
             ctx.fillStyle = ch.shirtColor;
             ctx.beginPath();
             ctx.ellipse(x, y - 6 * s, 8 * s, 6 * s, 0, 0, Math.PI * 2);
@@ -4383,27 +4957,41 @@
             ctx.fillRect(x + ch.facing * 4 * s, y - 17 * s, 3 * s, 3 * s);
             ctx.fillStyle = '#facc15';
             ctx.fillRect(x + ch.facing * 8 * s, y - 11 * s, 4 * s, 2.5 * s);
-          } else {
-            ctx.fillStyle = ch.shirtColor;
-            ctx.beginPath();
-            ctx.ellipse(x, y - 6 * s, 9 * s, 5.5 * s, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(x + ch.facing * 6 * s, y - 11 * s, 4.5 * s, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = '#fb923c';
-            ctx.fillRect(x + ch.facing * 9 * s, y - 11 * s, 5 * s, 2.5 * s);
           }
         } else {
-          const stride = ch.path.length > 0 ? Math.sin(ch.animPhase * 1.4) * 4 * s : 0;
+          const stride = ch.path.length > 0 ? Math.sin(ch.animPhase) * 3 * s : 0;
+          const seatedPlayPose = !walkingNow && ['swing','seesaw'].includes(ch.activityKey);
           ctx.fillStyle = ch.pantsColor || '#1e293b';
-          ctx.fillRect(x - 5 * s, y - 5 * s + stride * 0.4, 4 * s, 7 * s);
-          ctx.fillRect(x + 1 * s, y - 5 * s - stride * 0.4, 4 * s, 7 * s);
+          if (seatedPlayPose) {
+            // Bent legs hang from the seat instead of the usual standing pose.
+            ctx.fillRect(x - 6 * s, y - 5 * s, 4 * s, 8 * s);
+            ctx.fillRect(x + 2 * s, y - 5 * s, 4 * s, 8 * s);
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(x - 7 * s, y + 1 * s, 5 * s, 2 * s);
+            ctx.fillRect(x + 1 * s, y + 1 * s, 5 * s, 2 * s);
+          } else {
+            ctx.fillRect(x - 5 * s, y - 5 * s + stride * 0.4, 4 * s, 7 * s);
+            ctx.fillRect(x + 1 * s, y - 5 * s - stride * 0.4, 4 * s, 7 * s);
+          }
 
           ctx.fillStyle = ch.shirtColor;
           ctx.beginPath();
           ctx.roundRect(x - 7 * s, y - 15 * s, 14 * s, 11 * s, 3 * s);
           ctx.fill();
+          // Play poses: visible arms reach toward swing chains / seesaw handles.
+          ctx.strokeStyle = ch.shirtColor;
+          ctx.lineWidth = 3 * s;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          if (seatedPlayPose) {
+            const armSwing = Math.sin(nowSec * 3.2 + ch.animPhase) * 2 * s;
+            ctx.moveTo(x - 6 * s, y - 12 * s); ctx.lineTo(x - 11 * s, y - 8 * s + armSwing);
+            ctx.moveTo(x + 6 * s, y - 12 * s); ctx.lineTo(x + 11 * s, y - 8 * s - armSwing);
+          } else {
+            ctx.moveTo(x - 6 * s, y - 12 * s); ctx.lineTo(x - 9 * s, y - 5 * s + stride);
+            ctx.moveTo(x + 6 * s, y - 12 * s); ctx.lineTo(x + 9 * s, y - 5 * s - stride);
+          }
+          ctx.stroke();
 
           if (ch.hijabi) {
             ctx.fillStyle = ch.hairColor;
@@ -4425,350 +5013,304 @@
 
             ctx.fillStyle = ch.hairColor;
             ctx.beginPath();
-            ctx.arc(x, y - 21.5 * s, 6.8 * s, Math.PI, Math.PI * 2);
+            ctx.arc(x, y - 22 * s, 7 * s, Math.PI, Math.PI * 2);
             ctx.fill();
           }
+
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(x + (ch.facing * 2 - 2.5) * s, y - 20.5 * s, 1.8 * s, 2 * s);
+          ctx.fillRect(x + (ch.facing * 2 + 1.2) * s, y - 20.5 * s, 1.8 * s, 2 * s);
         }
 
-        const moodIcon = getMoodEmoji(ch.mood);
-        const tagLabel = `${moodIcon} ${ch.name}`;
+        if (ch.actionMode === 'sleep') {
+          ctx.fillStyle = '#e0f2fe';
+          ctx.font = 'bold 10px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('💤 zzz', x + 8 * s, y - 30 * s - ((nowSec * 8) % 6));
+        }
+
+        const labelText = ch.isPet ? `${ch.name.split(' ')[0]} ${getMoodEmoji(ch.mood)}` : `${ch.name} ${getMoodEmoji(ch.mood)}`;
         ctx.font = 'bold 9.5px sans-serif';
+        const lw = ctx.measureText(labelText).width + 8;
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.84)';
+        ctx.beginPath();
+        ctx.roundRect(baseX - lw * 0.5, baseY + 5, lw, 13, 5);
+        ctx.fill();
+        ctx.fillStyle = '#f8fafc';
         ctx.textAlign = 'center';
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
-        const tagW = ctx.measureText(tagLabel).width + 8;
-        ctx.fillRect(x - tagW * 0.5, y - 37 * s, tagW, 12);
-        ctx.fillStyle = ch.id === selectedEntityId ? '#fde047' : '#f8fafc';
-        ctx.fillText(tagLabel, x, y - 28 * s);
-
-        if (ch.isCrying) {
-          ctx.fillStyle = '#38bdf8';
-          ctx.font = 'bold 11px sans-serif';
-          ctx.fillText('😢 Huaa!', x, y - 41 * s - Math.abs(Math.sin(nowSec * 6)) * 4);
-        } else if (ch.actionMode === 'sleep') {
-          ctx.fillStyle = '#93c5fd';
-          ctx.font = 'bold 11px sans-serif';
-          ctx.fillText('Zzz', x + 12 * s, y - 34 * s - ((nowSec * 10) % 8));
-        }
+        ctx.fillText(labelText, baseX, baseY + 14.5);
       }
 
-      // FASA E.6: Maks 5 gelembung serentak, hanya dalam kamera, utamakan paling dekat tengah skrin, skala ikut zoom, emoji sahaja jika zoom < 0.45
       function drawSpeechBubbles(vw, vh) {
         if (activeBubbles.length === 0) return;
-
-        const centerX = vw * 0.5;
-        const centerY = vh * 0.5;
-        const candidates = [];
-
-        for (const b of activeBubbles) {
+        ctx.save();
+        activeBubbles.forEach(b => {
           const ch = characters.find(c => c.id === b.chId);
-          if (!ch || !ch.active || !ch.visible || b.alpha <= 0.01) continue;
-          const pt = worldToScreen(ch.x, ch.y - 42 * (ch.scale || 1));
-          if (pt.sx < -80 || pt.sx > vw + 80 || pt.sy < -80 || pt.sy > vh + 80) continue;
-          const distCenter = Math.hypot(pt.sx - centerX, pt.sy - centerY);
-          candidates.push({ b, ch, sx: pt.sx, sy: pt.sy, distCenter });
-        }
+          if (!ch || !ch.active || !ch.visible) return;
+          const s = ch.scale || 1;
+          const { sx, sy } = worldToScreen(ch.x, ch.y - 36 * s);
+          if (sx < -120 || sx > vw + 120 || sy < -80 || sy > vh + 80) return;
 
-        candidates.sort((a, b) => a.distCenter - b.distCenter);
-        const visibleBubbles = candidates.slice(0, 5);
-
-        const emojiOnlyMode = camera.zoom < 0.45;
-        const fontSize = Math.max(10, Math.min(16, Math.round(11.5 * Math.sqrt(Math.max(0.5, camera.zoom)))));
-
-        visibleBubbles.forEach(item => {
-          const { b, sx, sy } = item;
-          ctx.save();
           ctx.globalAlpha = Math.max(0, Math.min(1, b.alpha));
+          ctx.font = b.emojiOnly ? 'bold 14px sans-serif' : '600 10.5px sans-serif';
+          const textW = ctx.measureText(b.text).width;
+          const boxW = Math.min(230, Math.max(28, textW + 14));
+          const boxH = b.emojiOnly ? 24 : 22;
+          const bx = Math.max(8, Math.min(vw - boxW - 8, sx - boxW * 0.5));
+          const by = Math.max(48, sy - boxH);
 
-          let displayText = b.text;
-          if (emojiOnlyMode || b.emojiOnly) {
-            const match = b.text.match(/[\u{1F300}-\u{1FAFF}]/u);
-            displayText = match ? match[0] : (b.text.includes('?') ? '❓' : '💬');
-          } else if (displayText.length > 34) {
-            displayText = displayText.slice(0, 33) + '…';
-          }
-
-          ctx.font = `bold ${fontSize}px sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          const padX = 8;
-          const bw = ctx.measureText(displayText).width + padX * 2;
-          const bh = fontSize + 8;
-
-          ctx.fillStyle = 'rgba(248, 250, 252, 0.95)';
-          ctx.strokeStyle = 'rgba(15, 23, 42, 0.75)';
-          ctx.lineWidth = 1.5;
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
+          ctx.strokeStyle = 'rgba(125, 211, 252, 0.65)';
+          ctx.lineWidth = 1.2;
           ctx.beginPath();
-          ctx.roundRect(sx - bw * 0.5, sy - bh, bw, bh, 8);
+          ctx.roundRect(bx, by, boxW, boxH, 8);
           ctx.fill();
           ctx.stroke();
 
-          ctx.fillStyle = '#0f172a';
-          ctx.fillText(displayText, sx, sy - bh * 0.5);
-          ctx.restore();
+          ctx.fillStyle = '#f8fafc';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(b.text, bx + boxW * 0.5, by + boxH * 0.5 + 0.5, boxW - 8);
         });
+        ctx.restore();
       }
 
       /* =========================================================================
-         13. HUD & SLIDE-OVER DRAWER (MASA & PAPA, PELAWAT & HAIWAN, INSPEKTOR)
+         13. HUD, LACI KAWALAN & INSPEKTOR WATAK
          ========================================================================= */
+      const drawer = document.getElementById('controlDrawer');
+      const drawerBackdrop = document.getElementById('drawerBackdrop');
+      const drawerBody = document.getElementById('drawerBody');
       let activeDrawerTab = 'time';
+
+      function openDrawer() {
+        drawer.classList.add('open');
+        drawerBackdrop.classList.add('open');
+        renderDrawer();
+      }
+
+      function closeDrawer() {
+        drawer.classList.remove('open');
+        drawerBackdrop.classList.remove('open');
+      }
+
+      document.getElementById('openDrawerBtn').addEventListener('click', openDrawer);
+      document.getElementById('closeDrawerBtn').addEventListener('click', closeDrawer);
+      drawerBackdrop.addEventListener('click', closeDrawer);
+      document.getElementById('quickGroupBtn').addEventListener('click', gatherFamilyActivity);
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          activeDrawerTab = btn.dataset.tab;
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+          renderDrawer();
+        });
+      });
 
       function updateHud() {
         const { hours24, minutes } = getCurrentClock();
-        const dayEl = document.getElementById('dayDisplay');
-        const clockEl = document.getElementById('clockDisplay');
-        const periodEl = document.getElementById('periodBadge');
-        const nightBadge = document.getElementById('nightAccelBadge');
-        const papaPill = document.getElementById('papaStatusPill');
-
-        if (dayEl) dayEl.textContent = `Hari ${timeState.dayNumber} · ${getWeekday()}`;
-        if (clockEl) clockEl.textContent = format12Hour(hours24, minutes);
-
         const period = getDayPeriod(hours24);
-        if (periodEl) periodEl.textContent = period.label;
+        const wd = getWeekday();
+        const work = isWorkday();
+        const nightAccel = isNightAcceleratedActive();
 
-        if (nightBadge) {
-          nightBadge.classList.toggle('active', isNightAcceleratedActive());
+        document.getElementById('dayDisplay').textContent = `Hari ${timeState.dayNumber} · ${wd} (${work ? 'Kerja' : 'Hujung Minggu'})`;
+        document.getElementById('clockDisplay').textContent = format12Hour(hours24, minutes);
+        document.getElementById('periodBadge').textContent = period.label;
+
+        const accelBadge = document.getElementById('nightAccelBadge');
+        if (accelBadge) {
+          accelBadge.classList.toggle('active', nightAccel);
         }
 
-        if (papaPill) {
-          const papa = characters.find(c => c.id === 'papa');
-          if (papa && papa.carPhase === 'at_work') {
-            papaPill.textContent = 'Papa: Di Pejabat (9AM–6PM)';
-          } else if (familyCar.state === 'driving_out' || familyCar.state === 'driving_in') {
-            papaPill.textContent = 'Papa: Memandu Kereta';
-          } else {
-            papaPill.textContent = 'Papa: Di Rumah';
-          }
+        const papa = characters.find(c => c.id === 'papa');
+        const papaPill = document.getElementById('papaStatusPill');
+        if (papa && papa.carPhase === 'at_work') {
+          papaPill.textContent = 'Papa: Di Pejabat (9AM-6PM)';
+        } else if (familyCar.state === 'driving_out' || familyCar.state === 'driving_in') {
+          papaPill.textContent = 'Papa: Memandu Kereta';
+        } else {
+          papaPill.textContent = 'Papa: Di Rumah';
         }
-      }
-
-      function getFamilyRelationSummary(id) {
-        if (id === 'papa') return 'Suami Mama • Bapa Isaac & Hayyan • Anak Atok & Atok Bas';
-        if (id === 'mama') return 'Isteri Papa • Ibu Isaac & Hayyan • Anak TokPa & Tokma';
-        if (id === 'isaac') return 'Anak sulung Papa & Mama • Abang Hayyan • Cucu Atok, Atok Bas, TokPa & Tokma';
-        if (id === 'hayyan') return 'Anak bongsu Papa & Mama • Adik Isaac • Cucu Atok, Atok Bas, TokPa & Tokma';
-        if (id === 'atok') return 'Ibu Papa • Isteri Atok Bas • Nenek kepada semua 7 sepupu/cucu';
-        if (id === 'atok_bas') return 'Bapa Papa • Suami Atok • Datuk kepada semua 7 sepupu/cucu';
-        if (id === 'tokpa') return 'Bapa Mama • Suami Tokma • Datuk kepada Isaac & Hayyan sahaja';
-        if (id === 'tokma') return 'Ibu Mama • Isteri TokPa • Nenek kepada Isaac & Hayyan sahaja';
-        if (id === 'mummy_ngah') return 'Isteri Pak Ngah • Ibu Zaef, Ayden & Aufa (sebelah Papa)';
-        if (id === 'pak_ngah') return 'Suami Mummy Ngah • Bapa Zaef, Ayden & Aufa • Pemandu Grab';
-        if (id === 'amaya') return 'Isteri Uncle Syafiq • Ibu Alina & Afiya (sebelah Papa)';
-        if (id === 'uncle_syafiq') return 'Suami Amaya • Bapa Alina & Afiya • Pekerja Pejabat';
-        if (id === 'zaef') return 'Anak sulung Mummy Ngah & Pak Ngah • Sepupu sebelah Papa';
-        if (id === 'ayden') return 'Anak kedua Mummy Ngah & Pak Ngah • Sepupu sebelah Papa';
-        if (id === 'aufa') return 'Anak bongsu Mummy Ngah & Pak Ngah • Sepupu sebelah Papa';
-        if (id === 'alina') return 'Anak sulung Amaya & Uncle Syafiq • Sepupu sebelah Papa';
-        if (id === 'afiya') return 'Anak bongsu Amaya & Uncle Syafiq • Sepupu sebelah Papa';
-        return 'Haiwan kesayangan keluarga Rumah Kita';
       }
 
       function renderDrawer() {
-        const body = document.getElementById('drawerBody');
-        if (!body) return;
-
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-          btn.classList.toggle('active', btn.dataset.tab === activeDrawerTab);
+        document.querySelectorAll('.tab-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.tab === activeDrawerTab);
         });
 
-        const { hours24, minutes } = getCurrentClock();
-
         if (activeDrawerTab === 'time') {
-          body.innerHTML = `
-            <div class="card">
-              <h4>⏰ Masa &amp; Hari (${format12Hour(hours24, minutes)} • Hari ${timeState.dayNumber} · ${getWeekday()})</h4>
-              <div class="preset-grid">
-                <button class="pill-btn" data-set-time="7,0">🌅 Pagi (07:00 AM)</button>
-                <button class="pill-btn" data-set-time="10,0">💼 Kerja Papa (10:00 AM)</button>
-                <button class="pill-btn" data-set-time="12,30">😴 Tidur Siang (12:30 PM)</button>
-                <button class="pill-btn" data-set-time="18,15">🚗 Papa Pulang (06:15 PM)</button>
-                <button class="pill-btn" data-set-time="21,0">🌙 Pulang Tetamu (09:00 PM)</button>
-                <button class="pill-btn" data-set-time="22,30">🌃 Malam Tidur (10:30 PM)</button>
-              </div>
-              <div class="action-grid">
-                <button class="pill-btn" id="nextDay7AmBtn">⏭️ Lompat ke hari seterusnya (7AM)</button>
-                <button class="pill-btn" id="adv1HrBtn">+1 Jam</button>
-              </div>
-            </div>
-
-            <div class="card">
-              <h4>📅 Mula Pada Hari &amp; Mod Hari (FASA G)</h4>
-              <div style="font-size:10.5px;color:#cbd5e1;margin-bottom:5px;">Mula pada hari:</div>
-              <div class="preset-grid" style="margin-bottom:8px;">
-                <button class="pill-btn ${START_WEEKDAY === 1 ? 'active' : ''}" data-start-wd="1">Isnin</button>
-                <button class="pill-btn ${START_WEEKDAY === 6 ? 'active' : ''}" data-start-wd="6">Sabtu</button>
-              </div>
-              <div style="font-size:10.5px;color:#cbd5e1;margin-bottom:5px;">Mod hari:</div>
-              <div class="preset-grid">
-                <button class="pill-btn ${timeState.dayTypeMode === 'auto' ? 'active' : ''}" data-day-type="auto">Auto</button>
-                <button class="pill-btn ${timeState.dayTypeMode === 'workday' ? 'active' : ''}" data-day-type="workday">Hari Bekerja</button>
-                <button class="pill-btn ${timeState.dayTypeMode === 'weekend' ? 'active' : ''}" data-day-type="weekend">Hujung Minggu</button>
-                <button class="pill-btn" id="openGateManualBtn">🚪 Buka Pagar</button>
-              </div>
-            </div>
-
-            <div class="card">
-              <h4>👔 Jadual Kerja Papa (Isnin–Jumaat, 9:00 AM – 6:00 PM)</h4>
-              <div class="preset-grid">
-                <button class="pill-btn ${timeState.papaMode === 'auto' ? 'active' : ''}" data-papa-mode="auto">🔄 Auto Jadual</button>
-                <button class="pill-btn ${timeState.papaMode === 'work' ? 'active' : ''}" data-papa-mode="work">🏢 Keluar Kerja</button>
-                <button class="pill-btn ${timeState.papaMode === 'home' ? 'active' : ''}" data-papa-mode="home">🏠 Di Rumah</button>
-                <button class="pill-btn" id="rollVisitNowBtn">🎲 Gulung VISIT_PLAN</button>
-              </div>
-            </div>
-          `;
-
-          body.querySelectorAll('[data-set-time]').forEach(btn => {
-            btn.addEventListener('click', () => {
-              const [h, m] = btn.dataset.setTime.split(',').map(Number);
-              setVirtualTimeOfDay(h, m);
-              setTicker(`Masa diubah ke ${format12Hour(h, m)} (Hari ${timeState.dayNumber} · ${getWeekday()}).`);
-            });
-          });
-
-          const nextDayBtn = document.getElementById('nextDay7AmBtn');
-          if (nextDayBtn) nextDayBtn.addEventListener('click', jumpToNextDay7AM);
-
-          const adv1 = document.getElementById('adv1HrBtn');
-          if (adv1) {
-            adv1.addEventListener('click', () => {
-              timeState.virtualMinutes += 60;
-              timeState.dayNumber = Math.floor(timeState.virtualMinutes / 1440) + 1;
-              updateHud();
-              renderDrawer();
-              setTicker('Masa dimajukan +1 jam.');
-            });
-          }
-
-          body.querySelectorAll('[data-start-wd]').forEach(btn => {
-            btn.addEventListener('click', () => {
-              START_WEEKDAY = Number(btn.dataset.startWd);
-              rollVisitPlanForDay(timeState.dayNumber, false);
-              updateHud();
-              renderDrawer();
-            });
-          });
-
-          body.querySelectorAll('[data-day-type]').forEach(btn => {
-            btn.addEventListener('click', () => {
-              timeState.dayTypeMode = btn.dataset.dayType;
-              updateHud();
-              renderDrawer();
-            });
-          });
-
-          body.querySelectorAll('[data-papa-mode]').forEach(btn => {
-            btn.addEventListener('click', () => {
-              timeState.papaMode = btn.dataset.papaMode;
-              renderDrawer();
-              updateHud();
-            });
-          });
-
-          const gateBtn = document.getElementById('openGateManualBtn');
-          if (gateBtn) {
-            gateBtn.addEventListener('click', () => {
-              openFrontGate(4.5);
-              setTicker('Pagar hadapan dibuka.');
-            });
-          }
-
-          const rollBtn = document.getElementById('rollVisitNowBtn');
-          if (rollBtn) {
-            rollBtn.addEventListener('click', () => {
-              rollVisitPlanForDay(timeState.dayNumber, false);
-              setTicker(`Jadual VISIT_PLAN dikemas kini untuk Hari ${timeState.dayNumber} · ${getWeekday()}.`);
-              renderDrawer();
-            });
-          }
-          return;
+          renderTimeTab();
+        } else if (activeDrawerTab === 'visitors') {
+          renderVisitorsTab();
+        } else {
+          renderInspectTab();
         }
+      }
 
-        if (activeDrawerTab === 'visitors') {
-          const relatives = characters.filter(c => c.group === 'relative');
-          const pets = characters.filter(c => c.isPet);
+      function renderTimeTab() {
+        const { hours24, minutes } = getCurrentClock();
+        const wd = getWeekday();
+        const work = isWorkday();
+        const nightMult = getNightMultiplier();
 
-          const renderList = (arr) => arr.map(item => `
-            <div class="roster-item" data-inspect-id="${item.id}">
-              <div class="roster-meta">
-                <div class="roster-name"><span>${item.emoji}</span><span>${item.name}</span><span style="font-size:10px;color:#93c5fd;">(${item.age})</span></div>
-                <div class="roster-sub">${item.role} • ${item.active ? item.activity : (item.wantsToVisit ? 'Dijadualkan hadir' : 'Tiada di rumah')}</div>
+        drawerBody.innerHTML = `
+          <div class="card">
+            <h4>Hari Dalam Minggu &amp; Mod Hari</h4>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+              <div>
+                <div style="font-size:12px;font-weight:700;">Hari ${timeState.dayNumber} · ${wd}</div>
+                <div style="font-size:10.5px;color:#94a3b8;">Jenis Hari: <strong>${work ? 'Hari Bekerja (Isnin–Jumaat)' : 'Hujung Minggu (Sabtu–Ahad)'}</strong></div>
               </div>
-              <button class="toggle-chip ${item.active || item.wantsToVisit ? 'on' : ''}" data-toggle-id="${item.id}">
-                ${item.active ? 'Hadir' : item.wantsToVisit ? 'Batal' : 'Jemput'}
-              </button>
+              <button class="pill-btn" id="nextDayBtn">⏭️ Hari Seterusnya (7 AM)</button>
             </div>
-          `).join('');
+            <div class="preset-grid" style="grid-template-columns:repeat(3,1fr);">
+              <button class="pill-btn ${timeState.dayTypeMode === 'auto' ? 'active' : ''}" data-daytype="auto">Auto (${wd})</button>
+              <button class="pill-btn ${timeState.dayTypeMode === 'workday' ? 'active' : ''}" data-daytype="workday">Hari Bekerja</button>
+              <button class="pill-btn ${timeState.dayTypeMode === 'weekend' ? 'active' : ''}" data-daytype="weekend">Hujung Minggu</button>
+            </div>
+          </div>
 
-          body.innerHTML = `
-            <div class="card">
-              <h4>👵 Datuk Nenek, Saudara &amp; Sepupu</h4>
-              ${renderList(relatives)}
+          <div class="card">
+            <h4>Jam 12-Jam &amp; Preset Waktu</h4>
+            <div class="stat-row"><span>Waktu Semasa</span><strong>${format12Hour(hours24, minutes)}</strong></div>
+            <div class="stat-row"><span>Kadar Masa Virtual</span><strong>1 saat sebenar = 5 minit virtual</strong></div>
+            <div class="stat-row"><span>Gandaan Malam Aktif</span><strong>${nightMult.toFixed(1)}x (tiada percepatan malam)</strong></div>
+            <div class="preset-grid" style="margin-top:8px;">
+              <button class="pill-btn" data-preset="7">07:00 AM (Pagi)</button>
+              <button class="pill-btn" data-preset="9">09:00 AM (Papa Kerja)</button>
+              <button class="pill-btn" data-preset="13">01:00 PM (Tengah Hari)</button>
+              <button class="pill-btn" data-preset="18">06:00 PM (Papa Balik)</button>
+              <button class="pill-btn" data-preset="21">09:00 PM (Tidur Anak)</button>
+              <button class="pill-btn" data-preset="22">10:00 PM (Malam 2x)</button>
             </div>
-            <div class="card">
-              <h4>🐱 Haiwan Peliharaan</h4>
-              ${renderList(pets)}
-            </div>
-          `;
+          </div>
 
-          body.querySelectorAll('[data-toggle-id]').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-              e.stopPropagation();
-              toggleVisitorArrival(btn.dataset.toggleId);
-              renderDrawer();
-            });
+          <div class="card">
+            <h4>Jadual Papa (9:00 AM – 6:00 PM Hari Bekerja)</h4>
+            <div class="preset-grid" style="grid-template-columns:repeat(3,1fr);">
+              <button class="pill-btn ${timeState.papaMode === 'auto' ? 'active' : ''}" data-papamode="auto">Auto</button>
+              <button class="pill-btn ${timeState.papaMode === 'work' ? 'active' : ''}" data-papamode="work">Paksa Pejabat</button>
+              <button class="pill-btn ${timeState.papaMode === 'home' ? 'active' : ''}" data-papamode="home">Paksa Di Rumah</button>
+            </div>
+            <div class="action-grid">
+              <button class="pill-btn" id="callEatBtn">🍽️ Mama: "Jom makan!"</button>
+              <button class="pill-btn" id="gatherBtn">👨‍👩‍👦‍👦 Kumpul Keluarga</button>
+              <button class="pill-btn" id="tagGameBtn">🏃 Main Kejar-Kejar</button>
+              <button class="pill-btn" id="masakGameBtn">🍳 Main Masak-Masak</button>
+            </div>
+          </div>
+        `;
+
+        const nextDayBtn = document.getElementById('nextDayBtn');
+        if (nextDayBtn) nextDayBtn.addEventListener('click', jumpToNextDay7AM);
+
+        drawerBody.querySelectorAll('[data-daytype]').forEach(b => {
+          b.addEventListener('click', () => {
+            timeState.dayTypeMode = b.dataset.daytype;
+            updateHud();
+            renderDrawer();
           });
+        });
 
-          body.querySelectorAll('[data-inspect-id]').forEach(row => {
-            row.addEventListener('click', () => {
-              selectedEntityId = row.dataset.inspectId;
-              activeDrawerTab = 'inspect';
-              renderDrawer();
-            });
+        drawerBody.querySelectorAll('[data-preset]').forEach(b => {
+          b.addEventListener('click', () => {
+            setVirtualTimeOfDay(Number(b.dataset.preset), 0);
           });
-          return;
-        }
+        });
 
-        // Tab 3: Inspektor
-        const target = characters.find(c => c.id === selectedEntityId) || characters[0];
-        const prof = PROFILES[target.id] || { traits: { ceria: 0.7, penyabar: 0.7, aktif: 0.7, penyayang: 0.7, rajin: 0.7, pemalu: 0.3 } };
-        const roomName = getCurrentRoomAt(target.x, target.y);
+        drawerBody.querySelectorAll('[data-papamode]').forEach(b => {
+          b.addEventListener('click', () => {
+            timeState.papaMode = b.dataset.papamode;
+            updateHud();
+            renderDrawer();
+          });
+        });
 
-        const topRels = Object.entries(target.rel || {})
+        document.getElementById('callEatBtn').addEventListener('click', mamaCallToEat);
+        document.getElementById('gatherBtn').addEventListener('click', gatherFamilyActivity);
+        document.getElementById('tagGameBtn').addEventListener('click', startGroupKejarKejar);
+        document.getElementById('masakGameBtn').addEventListener('click', startGroupMasakMasak);
+      }
+
+      function renderVisitorsTab() {
+        const relatives = characters.filter(c => c.group === 'relative');
+        const pets = characters.filter(c => c.group === 'pet');
+
+        drawerBody.innerHTML = `
+          <div class="card">
+            <h4>Saudara-Mara &amp; Pelawat (${relatives.filter(r => r.active && r.visible).length}/${relatives.length} Hadir)</h4>
+            ${relatives.map(r => `
+              <div class="roster-item" data-inspect="${r.id}">
+                <div class="roster-meta">
+                  <div class="roster-name">${r.emoji} ${r.name} <span style="font-size:10px;color:#94a3b8;">(${r.age})</span></div>
+                  <div class="roster-sub">${r.active && r.visible ? `${getCurrentRoomAt(r.x, r.y)} • ${r.activity}` : (r.wantsToVisit ? 'Dijadualkan melawat hari ini' : 'Di rumah sendiri')}</div>
+                </div>
+                <button class="toggle-chip ${r.active && r.visible ? 'on' : ''}" data-toggle="${r.id}">
+                  ${r.active && r.visible ? 'Hadir' : 'Jemput'}
+                </button>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="card">
+            <h4>Haiwan Peliharaan &amp; Halaman</h4>
+            ${pets.map(p => `
+              <div class="roster-item" data-inspect="${p.id}">
+                <div class="roster-meta">
+                  <div class="roster-name">${p.emoji} ${p.name}</div>
+                  <div class="roster-sub">${p.actionMode === 'sleep' ? 'Tidur dalam rumah haiwan' : `${getCurrentRoomAt(p.x, p.y)} • ${p.activity}`}</div>
+                </div>
+                <button class="toggle-chip ${p.active && p.visible ? 'on' : ''}" data-toggle="${p.id}">
+                  ${p.active && p.visible ? 'Aktif' : 'Panggil'}
+                </button>
+              </div>
+            `).join('')}
+          </div>
+        `;
+
+        drawerBody.querySelectorAll('[data-toggle]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleVisitorArrival(btn.dataset.toggle);
+            renderDrawer();
+          });
+        });
+
+        drawerBody.querySelectorAll('[data-inspect]').forEach(row => {
+          row.addEventListener('click', () => {
+            selectedEntityId = row.dataset.inspect;
+            activeDrawerTab = 'inspect';
+            renderDrawer();
+          });
+        });
+      }
+
+      function renderInspectTab() {
+        const ch = characters.find(c => c.id === selectedEntityId) || characters[0];
+        const prof = PROFILES[ch.id] || { role: ch.role, traits: {} };
+        const roomName = ch.actionMode === 'sleep' && ch.isPet && ANIMAL_HOMES[ch.id]
+          ? ANIMAL_HOMES[ch.id].label
+          : getCurrentRoomAt(ch.x, ch.y);
+
+        const barColor = v => v >= 65 ? '#34d399' : v >= 35 ? '#fbbf24' : '#f87171';
+        const hungerBarColor = v => v <= 35 ? '#34d399' : v <= 70 ? '#fbbf24' : '#f87171';
+
+        const topRels = Object.entries(ch.rel || {})
           .map(([otherId, score]) => {
-            const other = characters.find(c => c.id === otherId);
-            return other ? { name: other.name, emoji: other.emoji, score: Math.round(score) } : null;
+            const other = characters.find(x => x.id === otherId);
+            return other ? { name: other.name, emoji: other.emoji, score } : null;
           })
           .filter(Boolean)
           .sort((a, b) => b.score - a.score)
-          .slice(0, 3);
+          .slice(0, 5);
 
-        const traitEntries = [
-          ['Ceria', prof.traits.ceria, '#facc15'],
-          ['Penyabar', prof.traits.penyabar, '#34d399'],
-          ['Aktif', prof.traits.aktif, '#38bdf8'],
-          ['Penyayang', prof.traits.penyayang, '#f472b6'],
-          ['Rajin', prof.traits.rajin, '#a78bfa'],
-          ['Pemalu', prof.traits.pemalu, '#fb923c']
-        ];
-
-        const needEntries = [
-          ['Tenaga', target.needs.tenaga, '#34d399'],
-          ['Kenyang', Math.max(0, 100 - target.needs.lapar), '#fbbf24'],
-          ['Hiburan', target.needs.hiburan, '#38bdf8'],
-          ['Sosial', target.needs.sosial, '#c084fc'],
-          ['Kebersihan', target.needs.kebersihan, '#2dd4bf']
-        ];
-
-        const last3Memories = (target.memory || []).slice(0, 3);
-
-        body.innerHTML = `
+        drawerBody.innerHTML = `
           <div class="card">
-            <h4>🔍 Pilih Watak / Saudara / Haiwan</h4>
+            <h4>Pilih Watak / Haiwan</h4>
             <div class="char-selector-strip">
               ${characters.map(c => `
-                <button class="chip-select ${c.id === target.id ? 'active' : ''}" data-pick-char="${c.id}">
+                <button class="chip-select ${c.id === ch.id ? 'active' : ''}" data-pick="${c.id}">
                   ${c.emoji} ${c.name.split(' ')[0]}
                 </button>
               `).join('')}
@@ -4776,232 +5318,240 @@
           </div>
 
           <div class="card">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;">
-              <div>
-                <div style="font-size:14px;font-weight:800;color:#fde047;">${target.emoji} ${target.name}</div>
-                <div style="font-size:11px;color:#93c5fd;font-weight:600;">${target.age} • ${target.role}</div>
+            <h4>${ch.emoji} ${ch.name} (${ch.age}) • ${getMoodEmoji(ch.mood)} ${getMoodLabel(ch.mood)}</h4>
+            <div class="stat-row"><span>Peranan</span><strong>${prof.role || ch.role}</strong></div>
+            <div class="stat-row"><span>Lokasi Semasa</span><strong>${ch.active && ch.visible ? roomName : (ch.carPhase === 'at_work' ? 'Pejabat (9AM-6PM)' : 'Tidak Hadir')}</strong></div>
+            <div class="stat-row"><span>Aktiviti</span><strong>${ch.activity}</strong></div>
+            <div class="thought-box">"${ch.thought || generateThought(ch)}"</div>
+
+            <div class="bar-grid" style="margin-top:8px;">
+              <div class="bar-item">
+                <div class="bar-label"><span>Lapar</span><span>${Math.round(ch.needs.lapar)}%</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:${Math.round(ch.needs.lapar)}%;background:${hungerBarColor(ch.needs.lapar)};"></div></div>
               </div>
-              <div style="text-align:right;">
-                <div style="font-size:18px;line-height:1;">${getMoodEmoji(target.mood)}</div>
-                <div style="font-size:10px;color:#cbd5e1;">${getMoodLabel(target.mood)}</div>
+              <div class="bar-item">
+                <div class="bar-label"><span>Tenaga</span><span>${Math.round(ch.needs.tenaga)}%</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:${Math.round(ch.needs.tenaga)}%;background:${barColor(ch.needs.tenaga)};"></div></div>
+              </div>
+              <div class="bar-item">
+                <div class="bar-label"><span>Hiburan</span><span>${Math.round(ch.needs.hiburan)}%</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:${Math.round(ch.needs.hiburan)}%;background:${barColor(ch.needs.hiburan)};"></div></div>
+              </div>
+              <div class="bar-item">
+                <div class="bar-label"><span>Sosial</span><span>${Math.round(ch.needs.sosial)}%</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:${Math.round(ch.needs.sosial)}%;background:${barColor(ch.needs.sosial)};"></div></div>
+              </div>
+              <div class="bar-item">
+                <div class="bar-label"><span>Kebersihan</span><span>${Math.round(ch.needs.kebersihan)}%</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:${Math.round(ch.needs.kebersihan)}%;background:${barColor(ch.needs.kebersihan)};"></div></div>
               </div>
             </div>
+          </div>
 
-            <div style="font-size:10.5px;color:#cbd5e1;background:rgba(15,23,42,0.65);padding:6px 8px;border-radius:8px;margin-bottom:6px;">
-              <strong>Salasilah:</strong> ${getFamilyRelationSummary(target.id)}
-            </div>
-
-            <div class="stat-row"><span>Lokasi</span><span>${target.active && target.visible ? roomName : 'Tiada / Di Luar / Tidur'}</span></div>
-            <div class="stat-row"><span>Aktiviti</span><span>${target.activity}</span></div>
-
-            <div class="thought-box">💭 "${target.thought || generateThought(target)}"</div>
-
-            <h4 style="margin-top:8px;">📊 Keperluan Semasa</h4>
-            <div class="bar-grid">
-              ${needEntries.map(([lbl, val, col]) => `
-                <div class="bar-item">
-                  <div class="bar-label"><span>${lbl}</span><span>${Math.round(val)}%</span></div>
-                  <div class="bar-track"><div class="bar-fill" style="width:${Math.round(val)}%;background:${col};"></div></div>
-                </div>
-              `).join('')}
-            </div>
-
-            <h4 style="margin-top:10px;">✨ Sifat Personaliti</h4>
-            <div class="bar-grid">
-              ${traitEntries.map(([lbl, val, col]) => `
-                <div class="bar-item">
-                  <div class="bar-label"><span>${lbl}</span><span>${Math.round(val * 100)}%</span></div>
-                  <div class="bar-track"><div class="bar-fill" style="width:${Math.round(val * 100)}%;background:${col};"></div></div>
-                </div>
-              `).join('')}
-            </div>
-
-            <h4 style="margin-top:10px;">💞 3 Hubungan Paling Rapat</h4>
+          <div class="card">
+            <h4>Hubungan Terdekat</h4>
             ${topRels.map(r => `
-              <div class="stat-row"><span>${r.emoji} ${r.name}</span><span>${r.score}%</span></div>
+              <div class="stat-row">
+                <span>${r.emoji} ${r.name}</span>
+                <strong>${r.score}/100</strong>
+              </div>
             `).join('')}
+          </div>
 
-            <h4 style="margin-top:10px;">🧠 3 Memori Terakhir</h4>
+          <div class="card">
+            <h4>Memori Terkini</h4>
             <ul class="mem-list">
-              ${last3Memories.length > 0 ? last3Memories.map(m => `<li>${m}</li>`).join('') : '<li>Tiada memori direkodkan lagi.</li>'}
+              ${(ch.memory || []).map(m => `<li>${m}</li>`).join('')}
             </ul>
-
-            <div class="action-grid">
-              <button class="pill-btn" data-cmd="kitchen">🍽️ Ke Dapur</button>
-              <button class="pill-btn" data-cmd="playroom">🧸 Bilik Mainan</button>
-              <button class="pill-btn" data-cmd="pool">🏊 Kolam Renang</button>
-              <button class="pill-btn" data-cmd="park">🎠 Taman Mainan</button>
-              <button class="pill-btn" data-cmd="toilet">🚽 Ke Tandas</button>
-              <button class="pill-btn" data-cmd="bath">🚿 Bilik Mandi</button>
-            </div>
           </div>
         `;
 
-        body.querySelectorAll('[data-pick-char]').forEach(btn => {
+        drawerBody.querySelectorAll('[data-pick]').forEach(btn => {
           btn.addEventListener('click', () => {
-            selectedEntityId = btn.dataset.pickChar;
-            renderDrawer();
-          });
-        });
-
-        body.querySelectorAll('[data-cmd]').forEach(btn => {
-          btn.addEventListener('click', () => {
-            if (!target.active) toggleVisitorArrival(target.id, true);
-            const cmd = btn.dataset.cmd;
-            if (cmd === 'kitchen') setCharacterActivity(target, 'Pergi ke Dapur & Ruang Makan', 'eat', 45, 17, false, 'eat', 9);
-            if (cmd === 'playroom') setCharacterActivity(target, 'Pergi ke Bilik Mainan', 'playroom', 62, 18, false, 'play', 9);
-            if (cmd === 'pool') setCharacterActivity(target, 'Pergi berenang di Kolam Renang', 'swim', 68, 47, true, 'swim', 10);
-            if (cmd === 'park') setCharacterActivity(target, 'Pergi bermain di taman halaman', 'slide', 36, 48, false, 'play', 9);
-            if (cmd === 'toilet') setCharacterActivity(target, 'Pergi ke Tandas', 'hygiene', 62, 32, false, 'idle', 7);
-            if (cmd === 'bath') setCharacterActivity(target, 'Pergi ke Bilik Mandi', 'hygiene', 36, 31, false, 'idle', 8);
-            setTicker(`${target.emoji} ${target.name}: ${target.activity}`);
+            selectedEntityId = btn.dataset.pick;
             renderDrawer();
           });
         });
       }
 
       /* =========================================================================
-         14. TESTING HOOKS (FASA F.9), EVENT BINDINGS & MAIN SIMULATION LOOP
+         14. AUDIO SUASANA & GELUNG UTAMA SIMULASI
          ========================================================================= */
-      // FASA F.9: Fungsi ujian global window.__skipToHour(h) dan window.__skipToDay(n)
-      window.__skipToHour = function (h) {
-        const clampedH = Math.max(0, Math.min(23.99, Number(h) || 0));
-        const dayOffset = Math.floor(timeState.virtualMinutes / 1440);
-        timeState.virtualMinutes = dayOffset * 1440 + clampedH * 60;
-        timeState.dayNumber = Math.floor(timeState.virtualMinutes / 1440) + 1;
-        updateScheduledArrivalsAndDepartures(0.016);
-        updateNightRoutine(0.016);
-        updateHud();
-        renderDrawer();
-      };
+      let audioCtx = null;
+      let ambientEnabled = false;
+      let ambientTimer = null;
 
-      window.__skipToDay = function (n) {
-        const targetDay = Math.max(1, Math.floor(Number(n) || 1));
-        const { hours24, minutes } = getCurrentClock();
-        timeState.virtualMinutes = (targetDay - 1) * 1440 + hours24 * 60 + minutes;
-        timeState.dayNumber = targetDay;
-        rollVisitPlanForDay(timeState.dayNumber, false);
-        updateScheduledArrivalsAndDepartures(0.016);
-        updateNightRoutine(0.016);
-        updateHud();
-        renderDrawer();
-      };
+      function toggleAmbientSound() {
+        ambientEnabled = !ambientEnabled;
+        const btn = document.getElementById('ambientSoundBtn');
+        if (btn) btn.textContent = ambientEnabled ? '🔊 Bunyi' : '🔇 Bunyi';
 
-      const drawer = document.getElementById('controlDrawer');
-      const backdrop = document.getElementById('drawerBackdrop');
-
-      function openDrawer() {
-        drawer.classList.add('open');
-        backdrop.classList.add('open');
-        renderDrawer();
+        if (ambientEnabled) {
+          try {
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (!audioCtx) audioCtx = new Ctx();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (ambientTimer !== null) clearInterval(ambientTimer);
+            ambientTimer = setInterval(() => {
+              if (!ambientEnabled || !audioCtx || audioCtx.state !== 'running') return;
+              const osc = audioCtx.createOscillator();
+              const gain = audioCtx.createGain();
+              osc.type = 'sine';
+              const notes = [261.63, 293.66, 329.63, 392.0, 440.0];
+              osc.frequency.value = notes[Math.floor(Math.random() * notes.length)];
+              gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+              gain.gain.exponentialRampToValueAtTime(0.015, audioCtx.currentTime + 0.25);
+              gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.4);
+              osc.connect(gain);
+              gain.connect(audioCtx.destination);
+              osc.start();
+              osc.stop(audioCtx.currentTime + 1.45);
+            }, 3200);
+          } catch (_) {}
+        } else if (ambientTimer !== null) {
+          clearInterval(ambientTimer);
+          ambientTimer = null;
+        }
       }
 
-      function closeDrawer() {
-        drawer.classList.remove('open');
-        backdrop.classList.remove('open');
+      document.getElementById('ambientSoundBtn').addEventListener('click', toggleAmbientSound);
+      document.getElementById('zoomInBtn').addEventListener('click', () => adjustZoom(1.18));
+      document.getElementById('zoomFitBtn').addEventListener('click', () => applyOrientationFitView());
+      document.getElementById('zoomOutBtn').addEventListener('click', () => adjustZoom(0.84));
+
+
+      // Weekend group-play scheduler: two shared activities per weekend day.
+      const weekendGroupEventsDone = new Set();
+      function updateWeekendGroupPlay() {
+        const weekday = getWeekday();
+        if (!['Sabtu', 'Ahad'].includes(weekday)) return;
+        const { hourFloat } = getCurrentClock();
+        const dayKey = `${timeState.dayNumber}`;
+        const presentKids = characters.filter(c => c.active && c.visible && !c.isPet &&
+          !c.leavingHome && c.actionMode !== 'sleep' &&
+          (PROFILES[c.id]?.ageYears || 99) >= 3 && (PROFILES[c.id]?.ageYears || 99) < 13);
+        if (presentKids.length < 3) return;
+
+        if (hourFloat >= 10 && hourFloat < 11.5 && !weekendGroupEventsDone.has(`${dayKey}-morning`)) {
+          weekendGroupEventsDone.add(`${dayKey}-morning`);
+          startGroupKejarKejar();
+          characters.filter(c => c.active && c.visible && !c.isPet && !c.leavingHome &&
+            ['mama','papa','mummy_ngah','amaya'].includes(c.id) && c.actionMode !== 'sleep')
+            .forEach(adult => {
+              setCharacterActivity(adult, 'Menemani sepupu bermain kejar-kejar di halaman', 'play_kids', 37, 46, false, 'play', 7);
+            });
+          setTicker('🏃 Aktiviti hujung minggu: semua sepupu bermain kejar-kejar bersama!');
+        }
+        if (hourFloat >= 15 && hourFloat < 16.5 && !weekendGroupEventsDone.has(`${dayKey}-afternoon`)) {
+          weekendGroupEventsDone.add(`${dayKey}-afternoon`);
+          startGroupMasakMasak();
+          characters.filter(c => c.active && c.visible && !c.isPet && !c.leavingHome &&
+            ['mama','papa','mummy_ngah','amaya'].includes(c.id) && c.actionMode !== 'sleep')
+            .forEach(adult => {
+              setCharacterActivity(adult, 'Menyediakan permainan dan menemani kanak-kanak', 'play_kids', 35, 47, false, 'play', 7);
+            });
+          setTicker('🍳 Aktiviti hujung minggu: sepupu bermain masak-masak bersama!');
+        }
       }
-
-      document.getElementById('openDrawerBtn').addEventListener('click', openDrawer);
-      document.getElementById('closeDrawerBtn').addEventListener('click', closeDrawer);
-      backdrop.addEventListener('click', closeDrawer);
-
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          activeDrawerTab = btn.dataset.tab;
-          renderDrawer();
-        });
-      });
-
-      document.getElementById('quickGroupBtn').addEventListener('click', gatherFamilyActivity);
-      document.getElementById('zoomInBtn').addEventListener('click', () => adjustZoom(1.2));
-      document.getElementById('zoomOutBtn').addEventListener('click', () => adjustZoom(0.82));
-      document.getElementById('zoomFitBtn').addEventListener('click', applyOrientationFitView);
-
-      function handleOrientationOrResize() {
-        resizeCanvas();
-        applyOrientationFitView();
-      }
-
-      window.addEventListener('resize', handleOrientationOrResize);
-      window.addEventListener('orientationchange', () => {
-        setTimeout(handleOrientationOrResize, 120);
-      });
-      if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', handleOrientationOrResize, { passive: true });
-      }
-
-      // Roll VISIT_PLAN awal semasa boot (FASA G.4)
-      rollVisitPlanForDay(timeState.dayNumber, true);
-
-      let lastFrameTime = performance.now();
+\n      let lastFrameMs = performance.now();
       let hudSyncAccum = 0;
+      let isPausedByVisibility = false;
+      let rafId = null;
 
-      function simulationLoop(now) {
-        const dt = Math.min(0.05, Math.max(0.001, (now - lastFrameTime) / 1000));
-        lastFrameTime = now;
-
-        const effectiveTimeScale = timeState.timeScale * getNightMultiplier();
-        timeState.virtualMinutes += (dt * effectiveTimeScale) / 60;
-        const newDayNumber = Math.floor(timeState.virtualMinutes / 1440) + 1;
-        if (newDayNumber !== timeState.dayNumber) {
-          timeState.dayNumber = newDayNumber;
+      function simulationStep(nowMs) {
+        if (isPausedByVisibility) {
+          rafId = null;
+          return;
         }
 
-        updateScheduledArrivalsAndDepartures(dt);
-        updateNightRoutine(dt);
-        updateGateAndCar(dt);
-        updateAdultResponsibilities(dt);
+        const rawDt = Math.min(0.05, Math.max(0.001, (nowMs - lastFrameMs) / 1000));
+        lastFrameMs = nowMs;
 
-        interactionThrottleAccum += dt;
-        if (interactionThrottleAccum >= 0.5) {
+        const nightMult = getNightMultiplier();
+        const simDt = rawDt * nightMult;
+        const effectiveTimeScale = timeState.timeScale; // simDt sudah mengambil nightMult; elak gandaan dua pada keperluan
+
+        timeState.virtualMinutes += (simDt * timeState.timeScale) / 60; // Konsisten 5 minit virtual / saat sebenar
+        const newDay = Math.floor(timeState.virtualMinutes / 1440) + 1;
+        if (newDay !== timeState.dayNumber) {
+          timeState.dayNumber = newDay;
+        }
+
+        updateScheduledArrivalsAndDepartures(simDt);
+        updateNightRoutine(simDt);
+        updateFamilyRoutines(simDt);
+        updateGateAndCar(simDt);
+        updateAdultResponsibilities(simDt);
+
+        characters.forEach(ch => updateCharacter(ch, simDt, effectiveTimeScale));
+
+        interactionThrottleAccum += simDt;
+        if (interactionThrottleAccum >= 1.1) {
           interactionThrottleAccum = 0;
           runSocialInteractionTick();
         }
 
-        updateConversationsAndBubbles(dt);
+        updateConversationsAndBubbles(rawDt);
+        drawWorld(nowMs / 1000);
 
-        for (let i = 0; i < characters.length; i++) {
-          updateCharacter(characters[i], dt, effectiveTimeScale);
-        }
-
-        drawWorld(now / 1000);
-
-        hudSyncAccum += dt;
-        if (hudSyncAccum >= 0.25) {
+        hudSyncAccum += rawDt;
+        if (hudSyncAccum >= 0.4) {
           hudSyncAccum = 0;
           updateHud();
+          if (drawer.classList.contains('open') && activeDrawerTab === 'inspect') {
+            renderInspectTab();
+          }
         }
 
-        requestAnimationFrame(simulationLoop);
+        rafId = requestAnimationFrame(simulationStep);
       }
 
-      resizeCanvas();
-      updateHud();
-      renderDrawer();
-      requestAnimationFrame(simulationLoop);
-    })();
-  </script>
-  <script>
-    // Quiet procedural ambience: soft filtered breeze and occasional gentle bird notes.
-    (() => {
-      const soundBtn=document.getElementById('ambientSoundBtn'); let audioCtx=null, master=null, windGain=null, enabled=false, birdTimer=null;
-      function startAmbience(){ if(enabled)return; const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return; audioCtx=audioCtx||new AC(); if(audioCtx.state==='suspended')audioCtx.resume(); master=audioCtx.createGain();master.gain.value=0.055;master.connect(audioCtx.destination);
-        const buffer=audioCtx.createBuffer(1,audioCtx.sampleRate*2,audioCtx.sampleRate);const data=buffer.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*0.25;const noise=audioCtx.createBufferSource();noise.buffer=buffer;noise.loop=true;const filter=audioCtx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=420;windGain=audioCtx.createGain();windGain.gain.value=0.22;noise.connect(filter);filter.connect(windGain);windGain.connect(master);noise.start();
-        const pad=audioCtx.createOscillator(),padGain=audioCtx.createGain();pad.type='sine';pad.frequency.value=110;padGain.gain.value=0.035;pad.connect(padGain); // corrected routing below
-        pad.disconnect();pad.connect(master);pad.start();
-        birdTimer=setInterval(()=>{if(!enabled||!audioCtx)return;const osc=audioCtx.createOscillator(),g=audioCtx.createGain();osc.type='sine';osc.frequency.setValueAtTime(1500+Math.random()*500,audioCtx.currentTime);osc.frequency.exponentialRampToValueAtTime(2200+Math.random()*500,audioCtx.currentTime+0.12);g.gain.setValueAtTime(0.0001,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(0.012,audioCtx.currentTime+0.03);g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+0.22);osc.connect(g);g.connect(master);osc.start();osc.stop(audioCtx.currentTime+0.24);},7000+Math.random()*2000);enabled=true;soundBtn.textContent='🔊 Bunyi';soundBtn.classList.add('primary');}
-      function stopAmbience(){enabled=false;if(birdTimer)clearInterval(birdTimer);if(master){master.gain.setTargetAtTime(0,audioCtx.currentTime,0.15);setTimeout(()=>{try{audioCtx.close();}catch(_){} audioCtx=null;master=null;windGain=null;},250);}soundBtn.textContent='🔇 Bunyi';soundBtn.classList.remove('primary');}
-      soundBtn.addEventListener('click',()=>enabled?stopAmbience():startAmbience());
-    })();
-  </script>
-  <script>
-    if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js').catch(err => {
-          console.warn('Service worker registration failed:', err);
-        });
+      window.addEventListener('resize', () => {
+        resizeCanvas();
       });
-    }
+
+      window.addEventListener('orientationchange', () => {
+        setTimeout(() => {
+          resizeCanvas();
+          applyOrientationFitView();
+        }, 120);
+      });
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          isPausedByVisibility = true;
+          if (rafId !== null) {
+            cancelAnimationFrame(rafId);
+            rafId = null;
+          }
+        } else {
+          isPausedByVisibility = false;
+          lastFrameMs = performance.now();
+          if (rafId === null) {
+            rafId = requestAnimationFrame(simulationStep);
+          }
+        }
+      });
+
+      window.addEventListener('pagehide', () => {
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+        if (ambientTimer !== null) {
+          clearInterval(ambientTimer);
+          ambientTimer = null;
+        }
+        if (audioCtx && typeof audioCtx.close === 'function') {
+          audioCtx.close().catch(() => {});
+        }
+      });
+
+      resizeCanvas();
+      rollVisitPlanForDay(timeState.dayNumber, true);
+      updateHud();
+      rafId = requestAnimationFrame(simulationStep);
+    })();
   </script>
 </body>
 </html>
